@@ -78,16 +78,16 @@ class PlatformService {
     );
 
     try {
-      await _notifications.show(id, title, body, platformChannelSpecifics);
-      
-      if (Platform.isWindows) {
-        // Sound Fallback
+      if (!Platform.isWindows) {
+        await _notifications.show(id, title, body, platformChannelSpecifics);
+      } else {
+        // Sound Fallback for Windows
         Process.run('powershell', [
           '-Command',
           '[System.Console]::Beep(880, 200); [System.Console]::Beep(1100, 200);'
         ]);
 
-        // Visual Fallback (Balloon Tip)
+        // Visual Fallback (Balloon Tip) for Windows
         final psCommand = """
           [reflection.assembly]::loadwithpartialname('System.Windows.Forms');
           [reflection.assembly]::loadwithpartialname('System.Drawing');
