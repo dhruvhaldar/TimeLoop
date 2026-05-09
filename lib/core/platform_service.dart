@@ -70,6 +70,10 @@ class PlatformService {
       linux: linuxPlatformChannelSpecifics,
     );
 
+    File('timeloop_debug.log').writeAsStringSync(
+      'Attempting to show notification: $title - $body\n',
+      mode: FileMode.append,
+    );
     await _notifications.show(id, title, body, platformChannelSpecifics);
   }
 

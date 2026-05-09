@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'reminder_schedule.dart';
 import 'stopwatch_engine.dart';
 import 'platform_service.dart';
@@ -18,7 +19,13 @@ class AppRuntime {
 
   void _startTicker() {
     _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
-      reconcileReminders(DateTime.now());
+      final now = DateTime.now();
+      // Log for debugging
+      File('timeloop_debug.log').writeAsStringSync(
+        'Ticker ran at ${now.toIso8601String()}\n',
+        mode: FileMode.append,
+      );
+      reconcileReminders(now);
     });
   }
 
