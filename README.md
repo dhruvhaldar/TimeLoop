@@ -1,27 +1,66 @@
-# TimeLoop
+# 🌀 TimeLoop
 
-TimeLoop is a cross-platform stopwatch and interval reminder app targeting Android, Web, Windows, and Linux.
+[![Flutter](https://img.shields.io/badge/Flutter-3.41.9-blue.svg?logo=flutter)](https://flutter.dev)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Web%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](#)
 
-## What is implemented
+**TimeLoop** is a high-precision, cross-platform stopwatch and interval reminder application. Designed for productivity, it features local-first persistence, responsive desktop/mobile layouts, and deep system integration.
 
-- Core stopwatch domain engine (`StopwatchEngine`): start/pause/resume/reset, lap recording, wake reconciliation.
-- Core reminder domain engine (`ReminderSchedule`): recurring interval handling, missed-reminder detection, next-trigger resync.
-- App runtime orchestrator (`AppRuntime`) to reconcile all reminders against current UTC time.
-- Unit + E2E domain tests covering stopwatch flow, reminder recovery, active/inactive schedule behavior.
+## ✨ Key Features
 
-## Project files
+- **High-Precision Stopwatch**: Millisecond accuracy with sleep/wake reconciliation.
+- **Smart Reminders**: Customizable recurring intervals with "missed reminder" detection.
+- **Responsive Layout**: Sidebar navigation for Desktop; Bottom Tabs for Mobile.
+- **Platform Native**: System tray support, native notifications, and "Always on Top" mode.
+- **Local First**: Persistence via SQLite (Native) and IndexedDB (Web).
 
-- `SOFTWARE_SPEC.md`: comprehensive product and platform specification.
-- `PLATFORM_SETUP.md`: platform compiler/build instructions for Android, Web, Windows, Linux.
+---
 
-## Test
+## 🚀 Build Instructions
 
+### Prerequisites
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable channel)
+- **Windows Only**: [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) with "Desktop development with C++" workload.
+- **Android Only**: Android SDK and command-line tools.
+
+### 🏁 Getting Started
 ```bash
-dart pub get
-dart test
+flutter pub get
 ```
 
+### 🪟 Windows
+Use the provided automated build script for timestamped releases:
+```powershell
+./build_windows.ps1
+```
+Or build manually:
+```bash
+flutter build windows --release
+```
 
-## DartPad Validation
+### 🌐 Web
+```bash
+flutter build web --release
+```
 
-Use `DARTPAD_TESTING.md` to validate the core logic in https://dartpad.dev/.
+### 🤖 Android
+```bash
+flutter build apk --release
+```
+
+### 🐧 Linux
+```bash
+flutter build linux --release
+```
+
+---
+
+## 🛠️ Project Structure
+
+- `lib/core`: Domain logic (Stopwatch engine, Reminder scheduling).
+- `lib/ui`: Responsive UI components and layout orchestration.
+- `windows_builds/`: Timestamped Windows release artifacts.
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
