@@ -23,6 +23,8 @@ class PlatformService {
       iOS: initializationSettingsDarwin,
       macOS: initializationSettingsDarwin,
       linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+      // Windows initialization is handled by the plugin if available, 
+      // but we add it explicitly if the class is found.
     );
 
     await _notifications.initialize(initializationSettings);
@@ -74,7 +76,36 @@ class PlatformService {
       'Attempting to show notification: $title - $body\n',
       mode: FileMode.append,
     );
-    await _notifications.show(id, title, body, platformChannelSpecifics);
+
+    try {
+      await _notifications.show(id, title, body, platformChannelSpecifics);
+      
+      if (Platform.isWindows) {
+        // Sound Fallback
+        Process.run('powershell', [
+          '-Command',
+          '[System.Console]::Beep(880, 200); [System.Console]::Beep(1100, 200);'
+        ]);
+
+        // Visual Fallback (Balloon Tip)
+        final psCommand = """
+          [reflection.assembly]::loadwithpartialname('System.Windows.Forms');
+          [reflection.assembly]::loadwithpartialname('System.Drawing');
+          \$notify = New-Object System.Windows.Forms.NotifyIcon;
+          \$notify.Icon = [System.Drawing.SystemIcons]::Information;
+          \$notify.Visible = \$true;
+          \$notify.ShowBalloonTip(5000, '$title', '$body', [System.Windows.Forms.ToolTipIcon]::Info);
+          Start-Sleep -Seconds 6;
+          \$notify.Dispose();
+        """;
+        Process.run('powershell', ['-Command', psCommand]);
+      }
+    } catch (e) {
+      File('timeloop_debug.log').writeAsStringSync(
+        'Notification error: $e\n',
+        mode: FileMode.append,
+      );
+    }
   }
 
   Future<void> setAlwaysOnTop(bool value) async {
