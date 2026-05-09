@@ -3,6 +3,7 @@ import 'dart:io';
 import 'reminder_schedule.dart';
 import 'stopwatch_engine.dart';
 import 'platform_service.dart';
+import 'persistence_service.dart';
 
 class AppRuntime {
   AppRuntime({
@@ -11,6 +12,12 @@ class AppRuntime {
   })  : stopwatch = stopwatch ?? StopwatchEngine(),
         reminders = reminders ?? <ReminderSchedule>[] {
     _startTicker();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final saves = await PersistenceService.instance.loadSaves();
+    stopwatch.loadSaves(saves);
   }
 
   final StopwatchEngine stopwatch;

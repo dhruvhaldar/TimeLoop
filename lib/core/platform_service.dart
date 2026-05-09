@@ -43,6 +43,7 @@ class PlatformService {
       );
       
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.setTitle('TimeLoop : Advanced Stopwatch and Repetitive Reminders');
         await windowManager.show();
         await windowManager.focus();
       });

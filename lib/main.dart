@@ -23,7 +23,7 @@ class TimeLoopApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TimeLoop',
+      title: 'TimeLoop : Advanced Stopwatch and Repetitive Reminders',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

@@ -67,18 +67,23 @@ class PersistenceService {
     );
   }
 
-  Future<List<ReminderSchedule>> loadReminders() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('reminders');
+  Future<void> saveSaves(List<Duration> saves) async {
+    final file = File('saved_times.txt');
+    final content = saves.map((d) => d.inMilliseconds.toString()).join('\n');
+    await file.writeAsString(content);
+  }
 
-    return List.generate(maps.length, (i) {
-      return ReminderSchedule(
-        id: maps[i]['id'],
-        message: maps[i]['message'],
-        interval: Duration(milliseconds: maps[i]['intervalMs']),
-        nextTriggerUtc: DateTime.parse(maps[i]['nextTriggerUtc']),
-        active: maps[i]['active'] == 1,
-      );
-    });
+  Future<List<Duration>> loadSaves() async {
+    final file = File('saved_times.txt');
+    if (!await file.exists()) return [];
+    
+    final content = await file.readAsString();
+    if (content.isEmpty) return [];
+    
+    return content
+        .split('\n')
+        .where((s) => s.isNotEmpty)
+        .map((s) => Duration(milliseconds: int.parse(s)))
+        .toList();
   }
 }

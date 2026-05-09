@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/stopwatch_engine.dart';
+import '../core/persistence_service.dart';
 
 class StopwatchView extends StatefulWidget {
   final StopwatchEngine engine;
@@ -106,22 +107,24 @@ class _StopwatchViewState extends State<StopwatchView> {
               ),
               const SizedBox(width: 20),
               _buildActionButton(
-                onPressed: () {
+                onPressed: () async {
                   setState(() {
-                    widget.engine.recordLap(DateTime.now());
+                    widget.engine.saveTime(DateTime.now());
                   });
+                  await PersistenceService.instance.saveSaves(widget.engine.saves);
                 },
-                icon: Icons.flag,
-                label: "LAP",
+                icon: Icons.save,
+                label: "SAVE",
                 color: Colors.blueAccent,
                 enabled: widget.engine.isRunning,
               ),
               const SizedBox(width: 20),
               _buildActionButton(
-                onPressed: () {
+                onPressed: () async {
                   setState(() {
                     widget.engine.reset();
                   });
+                  await PersistenceService.instance.saveSaves([]);
                 },
                 icon: Icons.refresh,
                 label: "RESET",
@@ -131,7 +134,7 @@ class _StopwatchViewState extends State<StopwatchView> {
           ),
           const SizedBox(height: 40),
           Expanded(
-            child: _buildLapList(),
+            child: _buildSaveList(),
           ),
         ],
       ),
@@ -167,22 +170,22 @@ class _StopwatchViewState extends State<StopwatchView> {
     );
   }
 
-  Widget _buildLapList() {
-    final laps = widget.engine.laps;
-    if (laps.isEmpty) {
+  Widget _buildSaveList() {
+    final saves = widget.engine.saves;
+    if (saves.isEmpty) {
       return Center(
         child: Text(
-          "No laps recorded yet",
+          "No saved times yet",
           style: TextStyle(color: Colors.white.withOpacity(0.3)),
         ),
       );
     }
 
     return ListView.builder(
-      itemCount: laps.length,
+      itemCount: saves.length,
       itemBuilder: (context, index) {
-        final lapIndex = laps.length - index;
-        final lapTime = laps[laps.length - 1 - index];
+        final saveIndex = saves.length - index;
+        final saveTime = saves[saves.length - 1 - index];
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -194,11 +197,11 @@ class _StopwatchViewState extends State<StopwatchView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "LAP $lapIndex",
+                "SAVE $saveIndex",
                 style: TextStyle(color: Colors.white.withOpacity(0.5)),
               ),
               Text(
-                _formatDuration(lapTime),
+                _formatDuration(saveTime),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ],
