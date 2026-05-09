@@ -5,6 +5,8 @@ import 'stopwatch_engine.dart';
 import 'platform_service.dart';
 import 'persistence_service.dart';
 
+enum ReminderMode { beepOnly, beepAndPopup }
+
 class AppRuntime {
   AppRuntime({
     StopwatchEngine? stopwatch,
@@ -24,6 +26,7 @@ class AppRuntime {
   final List<ReminderSchedule> reminders;
   Timer? _ticker;
   bool debugEnabled = false;
+  ReminderMode reminderMode = ReminderMode.beepAndPopup;
 
   void _startTicker() {
     _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -51,6 +54,7 @@ class AppRuntime {
           id: reminder.id.hashCode,
           title: "TimeLoop Reminder",
           body: body,
+          showPopup: reminderMode == ReminderMode.beepAndPopup,
         );
       }
     }

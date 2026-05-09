@@ -47,6 +47,33 @@ class _SettingsViewState extends State<SettingsView> {
           ),
           const SizedBox(height: 16),
           _buildSettingCard(
+            title: "Reminder Alert Mode",
+            subtitle: "Choose between just hearing a beep or beep + popup alert.",
+            trailing: DropdownButton<ReminderMode>(
+              value: widget.runtime.reminderMode,
+              dropdownColor: Colors.grey.shade900,
+              underline: Container(),
+              items: const [
+                DropdownMenuItem(
+                  value: ReminderMode.beepOnly,
+                  child: Text("Beep Only", style: TextStyle(color: Colors.white)),
+                ),
+                DropdownMenuItem(
+                  value: ReminderMode.beepAndPopup,
+                  child: Text("Beep + Popup", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+              onChanged: (mode) {
+                if (mode != null) {
+                  setState(() {
+                    widget.runtime.reminderMode = mode;
+                  });
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildSettingCard(
             title: "Always on Top",
             subtitle: "Keep the TimeLoop window above all other applications.",
             trailing: Switch(

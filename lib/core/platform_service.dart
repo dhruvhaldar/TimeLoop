@@ -54,6 +54,7 @@ class PlatformService {
     required int id,
     required String title,
     required String body,
+    bool showPopup = true,
   }) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -92,10 +93,12 @@ class PlatformService {
         ]);
 
         // Visual Fallback (WScript Popup) for Windows
-        final psCommand = """
-          (New-Object -ComObject WScript.Shell).Popup('$body', 10, '$title', 64)
-        """;
-        Process.run('powershell', ['-Command', psCommand]);
+        if (showPopup) {
+          final psCommand = """
+            (New-Object -ComObject WScript.Shell).Popup('$body', 10, '$title', 64)
+          """;
+          Process.run('powershell', ['-Command', psCommand]);
+        }
       }
     } catch (e) {
       if (debugEnabled) {
