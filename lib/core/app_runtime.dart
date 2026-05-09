@@ -1,24 +1,46 @@
+import 'dart:async';
 import 'reminder_schedule.dart';
 import 'stopwatch_engine.dart';
+import 'platform_service.dart';
 
 class AppRuntime {
   AppRuntime({
     StopwatchEngine? stopwatch,
     List<ReminderSchedule>? reminders,
   })  : stopwatch = stopwatch ?? StopwatchEngine(),
-        reminders = reminders ?? <ReminderSchedule>[];
+        reminders = reminders ?? <ReminderSchedule>[] {
+    _startTicker();
+  }
 
   final StopwatchEngine stopwatch;
   final List<ReminderSchedule> reminders;
+  Timer? _ticker;
 
-  List<ReminderTickResult> reconcileReminders(DateTime nowUtc) {
-    final results = <ReminderTickResult>[];
+  void _startTicker() {
+    _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      reconcileReminders(DateTime.now());
+    });
+  }
+
+  void reconcileReminders(DateTime nowUtc) {
     for (final reminder in reminders) {
       final result = reminder.reconcile(nowUtc);
       if (result.shouldNotify) {
-        results.add(result);
+        String body = reminder.message;
+        if (result.missed) {
+          body = "[MISSED ${result.missedCount}] $body";
+        }
+        
+        PlatformService.instance.showNotification(
+          id: reminder.id.hashCode,
+          title: "TimeLoop Reminder",
+          body: body,
+        );
       }
     }
-    return results;
+  }
+
+  void dispose() {
+    _ticker?.cancel();
   }
 }

@@ -57,10 +57,17 @@ class PlatformService {
       'TimeLoop Reminders',
       importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
+    );
+
+    const LinuxNotificationDetails linuxPlatformChannelSpecifics =
+        LinuxNotificationDetails(
+      urgency: LinuxNotificationUrgency.critical,
     );
 
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
+      linux: linuxPlatformChannelSpecifics,
     );
 
     await _notifications.show(id, title, body, platformChannelSpecifics);
