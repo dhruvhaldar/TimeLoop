@@ -91,16 +91,9 @@ class PlatformService {
           '[System.Console]::Beep(880, 200); [System.Console]::Beep(1100, 200);'
         ]);
 
-        // Visual Fallback (Balloon Tip) for Windows
+        // Visual Fallback (WScript Popup) for Windows
         final psCommand = """
-          [reflection.assembly]::loadwithpartialname('System.Windows.Forms');
-          [reflection.assembly]::loadwithpartialname('System.Drawing');
-          \$notify = New-Object System.Windows.Forms.NotifyIcon;
-          \$notify.Icon = [System.Drawing.SystemIcons]::Information;
-          \$notify.Visible = \$true;
-          \$notify.ShowBalloonTip(5000, '$title', '$body', [System.Windows.Forms.ToolTipIcon]::Info);
-          Start-Sleep -Seconds 6;
-          \$notify.Dispose();
+          (New-Object -ComObject WScript.Shell).Popup('$body', 10, '$title', 64)
         """;
         Process.run('powershell', ['-Command', psCommand]);
       }
