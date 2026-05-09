@@ -2,10 +2,10 @@ class StopwatchEngine {
   DateTime? _startUtc;
   Duration _accumulated = Duration.zero;
   bool _running = false;
-  final List<Duration> _laps = <Duration>[];
+  final List<Duration> _saves = <Duration>[];
 
   bool get isRunning => _running;
-  List<Duration> get laps => List<Duration>.unmodifiable(_laps);
+  List<Duration> get saves => List<Duration>.unmodifiable(_saves);
 
   void start(DateTime nowUtc) {
     if (_running) return;
@@ -26,7 +26,7 @@ class StopwatchEngine {
     _running = false;
     _startUtc = null;
     _accumulated = Duration.zero;
-    _laps.clear();
+    _saves.clear();
   }
 
   Duration elapsed(DateTime nowUtc) {
@@ -36,10 +36,15 @@ class StopwatchEngine {
     return _accumulated + nowUtc.toUtc().difference(_startUtc!);
   }
 
-  Duration recordLap(DateTime nowUtc) {
+  Duration saveTime(DateTime nowUtc) {
     final value = elapsed(nowUtc);
-    _laps.add(value);
+    _saves.add(value);
     return value;
+  }
+
+  void loadSaves(List<Duration> loadedSaves) {
+    _saves.clear();
+    _saves.addAll(loadedSaves);
   }
 
   Duration reconcileAfterWake(DateTime wakeUtc) {
