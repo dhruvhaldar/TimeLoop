@@ -8,6 +8,7 @@ class PlatformService {
   static final PlatformService instance = PlatformService._();
   PlatformService._();
 
+  bool debugEnabled = false;
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
@@ -72,10 +73,12 @@ class PlatformService {
       linux: linuxPlatformChannelSpecifics,
     );
 
-    File('timeloop_debug.log').writeAsStringSync(
-      'Attempting to show notification: $title - $body\n',
-      mode: FileMode.append,
-    );
+    if (debugEnabled) {
+      File('timeloop_debug.log').writeAsStringSync(
+        'Attempting to show notification: $title - $body\n',
+        mode: FileMode.append,
+      );
+    }
 
     try {
       if (!Platform.isWindows) {
@@ -101,10 +104,12 @@ class PlatformService {
         Process.run('powershell', ['-Command', psCommand]);
       }
     } catch (e) {
-      File('timeloop_debug.log').writeAsStringSync(
-        'Notification error: $e\n',
-        mode: FileMode.append,
-      );
+      if (debugEnabled) {
+        File('timeloop_debug.log').writeAsStringSync(
+          'Notification error: $e\n',
+          mode: FileMode.append,
+        );
+      }
     }
   }
 

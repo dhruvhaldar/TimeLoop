@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'stopwatch_view.dart';
 import 'reminders_view.dart';
+import 'settings_view.dart';
 import '../core/app_runtime.dart';
 import '../core/reminder_schedule.dart';
 
@@ -55,6 +56,10 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
               icon: Icon(Icons.notifications),
               label: Text('Reminders'),
             ),
+            NavigationRailDestination(
+              icon: Icon(Icons.settings),
+              label: Text('Settings'),
+            ),
           ],
         ),
         const VerticalDivider(thickness: 1, width: 1, color: Colors.white10),
@@ -90,6 +95,10 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
               icon: Icon(Icons.notifications),
               label: 'Reminders',
             ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
           ],
         ),
       ],
@@ -97,27 +106,32 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
   }
 
   Widget _getSelectedView() {
-    if (_selectedIndex == 0) {
-      return StopwatchView(engine: widget.runtime.stopwatch);
-    } else {
-      return RemindersView(
-        reminders: widget.runtime.reminders,
-        onToggle: (reminder) {
-          setState(() {
-            reminder.active = !reminder.active;
-          });
-        },
-        onDelete: (reminder) {
-          setState(() {
-            widget.runtime.reminders.remove(reminder);
-          });
-        },
-        onAdd: (reminder) {
-          setState(() {
-            widget.runtime.reminders.add(reminder);
-          });
-        },
-      );
+    switch (_selectedIndex) {
+      case 0:
+        return StopwatchView(engine: widget.runtime.stopwatch);
+      case 1:
+        return RemindersView(
+          reminders: widget.runtime.reminders,
+          onToggle: (reminder) {
+            setState(() {
+              reminder.active = !reminder.active;
+            });
+          },
+          onDelete: (reminder) {
+            setState(() {
+              widget.runtime.reminders.remove(reminder);
+            });
+          },
+          onAdd: (reminder) {
+            setState(() {
+              widget.runtime.reminders.add(reminder);
+            });
+          },
+        );
+      case 2:
+        return SettingsView(runtime: widget.runtime);
+      default:
+        return StopwatchView(engine: widget.runtime.stopwatch);
     }
   }
 }
