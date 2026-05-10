@@ -124,7 +124,6 @@ class _StopwatchViewState extends State<StopwatchView> {
                   setState(() {
                     widget.engine.reset();
                   });
-                  await PersistenceService.instance.saveSaves([]);
                 },
                 icon: Icons.refresh,
                 label: "RESET",
@@ -206,10 +205,44 @@ class _StopwatchViewState extends State<StopwatchView> {
                   _formatDuration(saveTime),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () => _confirmDeleteSave(context, saves.length - 1 - index),
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _confirmDeleteSave(BuildContext context, int engineIndex) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey.shade900,
+        title: const Text("Delete Save?", style: TextStyle(color: Colors.white)),
+        content: const Text("Are you sure you want to delete this recorded time?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              setState(() {
+                widget.engine.deleteSaveAt(engineIndex);
+              });
+              await PersistenceService.instance.saveSaves(widget.engine.saves);
+            },
+            child: const Text("DELETE", style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
       ),
     );
   }

@@ -29,7 +29,16 @@ class StopwatchEngine {
     _running = false;
     _startUtc = null;
     _accumulated = Duration.zero;
+  }
+
+  void clearSaves() {
     _saves.clear();
+  }
+
+  void deleteSaveAt(int index) {
+    if (index >= 0 && index < _saves.length) {
+      _saves.removeAt(index);
+    }
   }
 
   Duration elapsed(DateTime nowUtc) {

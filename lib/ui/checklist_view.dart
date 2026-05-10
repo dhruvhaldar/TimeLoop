@@ -71,6 +71,7 @@ class _ChecklistViewState extends State<ChecklistView> {
                 ),
               ),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   IconButton(
                     onPressed: () {
@@ -78,6 +79,8 @@ class _ChecklistViewState extends State<ChecklistView> {
                         _isAutoSort = !_isAutoSort;
                       });
                     },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                     icon: Icon(
                       _isAutoSort ? Icons.auto_awesome : Icons.sort,
                       color: _isAutoSort ? Colors.blueAccent : Colors.white24,
@@ -85,12 +88,19 @@ class _ChecklistViewState extends State<ChecklistView> {
                     ),
                     tooltip: _isAutoSort ? "Auto-sort active" : "Manual sorting active",
                   ),
-                  if (widget.items.any((item) => item.isCompleted))
+                  if (widget.items.any((item) => item.isCompleted)) ...[
+                    const SizedBox(width: 16),
                     TextButton.icon(
                       onPressed: widget.onClearCompleted,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       icon: const Icon(Icons.delete_sweep, color: Colors.redAccent, size: 20),
                       label: const Text("Clear Done", style: TextStyle(color: Colors.redAccent, fontSize: 12)),
                     ),
+                  ],
                 ],
               ),
             ],
