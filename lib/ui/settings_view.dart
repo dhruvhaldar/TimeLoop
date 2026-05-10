@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../core/app_runtime.dart';
 import '../core/platform_service.dart';
+import '../core/persistence_service.dart';
 
 class SettingsView extends StatefulWidget {
   final AppRuntime runtime;
@@ -87,6 +89,47 @@ class _SettingsViewState extends State<SettingsView> {
               activeColor: Colors.blueAccent,
             ),
           ),
+          const SizedBox(height: 30),
+          Text(
+            "DATA MANAGEMENT",
+            style: TextStyle(
+              color: Colors.grey.shade400,
+              letterSpacing: 4,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildSettingCard(
+            title: "Backup Data",
+            subtitle: "Export all data to 'timeloop_backup.json' in the app folder.",
+            trailing: IconButton(
+              onPressed: () async {
+                try {
+                  final path = await PersistenceService.instance.exportBackup();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Backup saved to: $path"),
+                      backgroundColor: Colors.blueAccent,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Backup failed: $e"), backgroundColor: Colors.redAccent),
+                  );
+                }
+              },
+              icon: const Icon(Icons.backup, color: Colors.blueAccent),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildSettingCard(
+            title: "Restore Data",
+            subtitle: "Import data from 'timeloop_backup.json' (Destructive).",
+            trailing: IconButton(
+              onPressed: () => _confirmRestore(context),
+              icon: const Icon(Icons.restore, color: Colors.orangeAccent),
+            ),
+          ),
           const Spacer(),
           Center(
             child: Text(
@@ -129,6 +172,56 @@ class _SettingsViewState extends State<SettingsView> {
             ),
           ),
           trailing,
+        ],
+      ),
+    );
+  }
+
+  void _confirmRestore(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey.shade900,
+        title: const Text("Restore Data?", style: TextStyle(color: Colors.white)),
+        content: const Text(
+          "This will overwrite all current reminders, checklist items, and history. Are you sure?",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final file = File('timeloop_backup.json');
+              if (await file.exists()) {
+                try {
+                  final jsonString = await file.readAsString();
+                  await PersistenceService.instance.importBackup(jsonString);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Data restored. Please restart the app."),
+                      backgroundColor: Colors.orangeAccent,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Restore failed: $e"), backgroundColor: Colors.redAccent),
+                  );
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Backup file 'timeloop_backup.json' not found."),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
+            },
+            child: const Text("RESTORE", style: TextStyle(color: Colors.orangeAccent)),
+          ),
         ],
       ),
     );

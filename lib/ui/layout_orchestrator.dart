@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'stopwatch_view.dart';
 import 'reminders_view.dart';
+import 'checklist_view.dart';
 import 'settings_view.dart';
 import '../core/app_runtime.dart';
 import '../core/reminder_schedule.dart';
@@ -57,6 +58,10 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
               label: Text('Reminders'),
             ),
             NavigationRailDestination(
+              icon: Icon(Icons.checklist),
+              label: Text('Checklist'),
+            ),
+            NavigationRailDestination(
               icon: Icon(Icons.settings),
               label: Text('Settings'),
             ),
@@ -96,6 +101,10 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
               label: 'Reminders',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.checklist),
+              label: 'Checklist',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.settings),
               label: 'Settings',
             ),
@@ -129,6 +138,30 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
           },
         );
       case 2:
+        return ChecklistView(
+          items: widget.runtime.checklistItems,
+          onToggle: (item) {
+            setState(() {
+              widget.runtime.toggleChecklistItem(item);
+            });
+          },
+          onDelete: (id) {
+            setState(() {
+              widget.runtime.deleteChecklistItem(id);
+            });
+          },
+          onAdd: (text) {
+            setState(() {
+              widget.runtime.addChecklistItem(text);
+            });
+          },
+          onClearCompleted: () {
+            setState(() {
+              widget.runtime.clearCompletedChecklist();
+            });
+          },
+        );
+      case 3:
         return SettingsView(runtime: widget.runtime);
       default:
         return StopwatchView(engine: widget.runtime.stopwatch);
