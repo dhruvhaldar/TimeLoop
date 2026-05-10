@@ -72,17 +72,32 @@ class _StopwatchViewState extends State<StopwatchView> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                color: Colors.black.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.cyanAccent.withOpacity(0.1)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.deepPurple.withOpacity(0.2),
+                    blurRadius: 40,
+                    spreadRadius: 5,
+                  ),
+                ],
               ),
               child: Text(
                 _formatDuration(elapsed),
-                style: const TextStyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.w200,
-                  color: Colors.white,
-                  fontFamily: 'Courier', // Using a monospace font for stability
+                style: TextStyle(
+                  fontSize: 72,
+                  fontWeight: FontWeight.w900, // Ultra bold
+                  color: Colors.cyanAccent, // Neon digital color
+                  letterSpacing: -1,
+                  fontFamily: 'Consolas', // Digital-feeling system font on Windows
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  shadows: [
+                    Shadow(
+                      color: Colors.cyanAccent.withOpacity(0.5),
+                      blurRadius: 20,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -101,11 +116,12 @@ class _StopwatchViewState extends State<StopwatchView> {
                     }
                   });
                 },
-                icon: widget.engine.isRunning ? Icons.pause : Icons.play_arrow,
+                icon: widget.engine.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
                 label: widget.engine.isRunning ? "PAUSE" : "START",
-                color: widget.engine.isRunning ? Colors.orange : Colors.greenAccent,
+                tooltip: widget.engine.isRunning ? "Pause timer" : "Start timer",
+                color: widget.engine.isRunning ? Colors.orangeAccent : Colors.greenAccent,
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 32),
               _buildActionButton(
                 onPressed: () async {
                   setState(() {
@@ -113,20 +129,22 @@ class _StopwatchViewState extends State<StopwatchView> {
                   });
                   await PersistenceService.instance.saveSaves(widget.engine.saves);
                 },
-                icon: Icons.save,
-                label: "SAVE",
+                icon: Icons.bookmark_add_outlined,
+                label: "LAP",
+                tooltip: "Record a lap time",
                 color: Colors.blueAccent,
                 enabled: widget.engine.isRunning,
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 32),
               _buildActionButton(
                 onPressed: () async {
                   setState(() {
                     widget.engine.reset();
                   });
                 },
-                icon: Icons.refresh,
+                icon: Icons.restart_alt_rounded,
                 label: "RESET",
+                tooltip: "Reset the timer",
                 color: Colors.redAccent,
               ),
             ],
@@ -144,28 +162,42 @@ class _StopwatchViewState extends State<StopwatchView> {
     required VoidCallback onPressed,
     required IconData icon,
     required String label,
+    required String tooltip,
     required Color color,
     bool enabled = true,
   }) {
-    return Column(
-      children: [
-        ElevatedButton(
-          onPressed: enabled ? onPressed : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color.withOpacity(0.2),
-            foregroundColor: color,
-            padding: const EdgeInsets.all(20),
-            shape: const CircleBorder(),
-            side: BorderSide(color: color.withOpacity(0.5)),
-          ),
-          child: Icon(icon, size: 30),
+    return Semantics(
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: tooltip,
+        child: Column(
+          children: [
+            ElevatedButton(
+              onPressed: enabled ? onPressed : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color.withOpacity(0.1),
+                foregroundColor: color,
+                elevation: 0,
+                padding: const EdgeInsets.all(16),
+                shape: const CircleBorder(),
+                side: BorderSide(color: color.withOpacity(0.2)),
+              ),
+              child: Icon(icon, size: 28),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: color.withOpacity(0.6),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(color: color.withOpacity(0.8), fontSize: 12),
-        ),
-      ],
+      ),
     );
   }
 

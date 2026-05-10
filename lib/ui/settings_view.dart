@@ -104,33 +104,39 @@ class _SettingsViewState extends State<SettingsView> {
               const SizedBox(height: 16),
               _buildSettingCard(
                 title: "Backup Data",
-                subtitle: "Export all data to 'timeloop_backup.json' in the app folder.",
-                trailing: IconButton(
-                  onPressed: () async {
-                    try {
-                      final path = await PersistenceService.instance.exportBackup();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Backup saved to: $path"),
-                          backgroundColor: Colors.blueAccent,
-                        ),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Backup failed: $e"), backgroundColor: Colors.redAccent),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.backup, color: Colors.blueAccent),
+                subtitle: "Export all data to 'timeloop_backup.json'.",
+                trailing: Tooltip(
+                  message: "Export data",
+                  child: IconButton(
+                    onPressed: () async {
+                      try {
+                        final path = await PersistenceService.instance.exportBackup();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Backup saved to: $path"),
+                            backgroundColor: Colors.blueAccent,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Backup failed: $e"), backgroundColor: Colors.redAccent),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.backup_outlined, color: Colors.blueAccent, size: 20),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               _buildSettingCard(
                 title: "Restore Data",
-                subtitle: "Import data from 'timeloop_backup.json' (Destructive).",
-                trailing: IconButton(
-                  onPressed: () => _confirmRestore(context),
-                  icon: const Icon(Icons.restore, color: Colors.orangeAccent),
+                subtitle: "Import data from 'timeloop_backup.json'.",
+                trailing: Tooltip(
+                  message: "Restore data",
+                  child: IconButton(
+                    onPressed: () => _confirmRestore(context),
+                    icon: const Icon(Icons.restore_page_outlined, color: Colors.orangeAccent, size: 20),
+                  ),
                 ),
               ),
               const SizedBox(height: 30),
@@ -171,32 +177,37 @@ class _SettingsViewState extends State<SettingsView> {
     required String subtitle,
     required Widget trailing,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
-                ),
-              ],
+    return Semantics(
+      container: true,
+      label: "$title setting",
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.015),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.03)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11),
+                  ),
+                ],
+              ),
             ),
-          ),
-          trailing,
-        ],
+            trailing,
+          ],
+        ),
       ),
     );
   }

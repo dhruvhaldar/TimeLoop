@@ -42,9 +42,12 @@ class _RemindersViewState extends State<RemindersView> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              IconButton(
-                onPressed: () => _showAddDialog(context),
-                icon: const Icon(Icons.add_circle, color: Colors.blueAccent, size: 32),
+              Tooltip(
+                message: "Add new reminder",
+                child: IconButton(
+                  onPressed: () => _showAddDialog(context),
+                  icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.blueAccent, size: 28),
+                ),
               ),
             ],
           ),
@@ -87,60 +90,74 @@ class _RemindersViewState extends State<RemindersView> {
   }
 
   Widget _buildReminderCard(ReminderSchedule reminder) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: reminder.active
-              ? Colors.blueAccent.withOpacity(0.3)
-              : Colors.white.withOpacity(0.1),
+    return Semantics(
+      label: "Reminder: ${reminder.message}, every ${reminder.interval.inMinutes} minutes",
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.015),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: reminder.active
+                ? Colors.blueAccent.withOpacity(0.15)
+                : Colors.white.withOpacity(0.03),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  reminder.message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    reminder.message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 2),
+                  Text(
+                    "Every ${reminder.interval.inMinutes} min",
+                    style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Next: ${reminder.nextTriggerUtc.toLocal().toString().split(' ')[1].substring(0, 5)}",
+                    style: TextStyle(color: Colors.blueAccent.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 32,
+                  child: Transform.scale(
+                    scale: 0.7,
+                    child: Switch(
+                      value: reminder.active,
+                      onChanged: (_) => widget.onToggle(reminder),
+                      activeColor: Colors.blueAccent,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  "Every ${reminder.interval.inMinutes} mins",
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                const Spacer(),
-                Text(
-                  "Next: ${reminder.nextTriggerUtc.toLocal().toString().split('.')[0]}",
-                  style: TextStyle(color: Colors.blueAccent.shade100, fontSize: 12),
+                Tooltip(
+                  message: "Delete reminder",
+                  child: IconButton(
+                    icon: Icon(Icons.delete_outline_rounded, color: Colors.redAccent.withOpacity(0.3), size: 18),
+                    onPressed: () => widget.onDelete(reminder),
+                  ),
                 ),
               ],
             ),
-          ),
-          Column(
-            children: [
-              Switch(
-                value: reminder.active,
-                onChanged: (_) => widget.onToggle(reminder),
-                activeColor: Colors.blueAccent,
-              ),
-              IconButton(
-                onPressed: () => widget.onDelete(reminder),
-                icon: Icon(Icons.delete_outline, color: Colors.redAccent.withOpacity(0.5)),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -60,27 +60,31 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
               _selectedIndex = index;
             });
           },
-          labelType: NavigationRailLabelType.all,
+          labelType: NavigationRailLabelType.none,
           backgroundColor: Colors.black,
-          unselectedIconTheme: const IconThemeData(color: Colors.white24),
-          selectedIconTheme: const IconThemeData(color: Colors.blueAccent),
-          unselectedLabelTextStyle: const TextStyle(color: Colors.white24),
-          selectedLabelTextStyle: const TextStyle(color: Colors.blueAccent),
+          unselectedIconTheme: IconThemeData(color: Colors.white.withOpacity(0.2), size: 24),
+          selectedIconTheme: const IconThemeData(color: Colors.blueAccent, size: 28),
+          useIndicator: true,
+          indicatorColor: Colors.blueAccent.withOpacity(0.1),
           destinations: const [
             NavigationRailDestination(
-              icon: Icon(Icons.timer),
+              icon: Tooltip(message: "Stopwatch", child: Icon(Icons.timer_outlined)),
+              selectedIcon: Icon(Icons.timer),
               label: Text('Stopwatch'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.notifications),
+              icon: Tooltip(message: "Reminders", child: Icon(Icons.notifications_none_rounded)),
+              selectedIcon: Icon(Icons.notifications_rounded),
               label: Text('Reminders'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.checklist),
+              icon: Tooltip(message: "Checklist", child: Icon(Icons.checklist_rtl_rounded)),
+              selectedIcon: Icon(Icons.checklist_rounded),
               label: Text('Checklist'),
             ),
             NavigationRailDestination(
-              icon: Icon(Icons.settings),
+              icon: Tooltip(message: "Settings", child: Icon(Icons.settings_outlined)),
+              selectedIcon: Icon(Icons.settings),
               label: Text('Settings'),
             ),
           ],
@@ -111,19 +115,23 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
           selectedItemColor: Colors.blueAccent,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.timer),
+              icon: Tooltip(message: "Stopwatch", child: Icon(Icons.timer_outlined)),
+              activeIcon: Icon(Icons.timer),
               label: 'Stopwatch',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.notifications),
+              icon: Tooltip(message: "Reminders", child: Icon(Icons.notifications_none_rounded)),
+              activeIcon: Icon(Icons.notifications_rounded),
               label: 'Reminders',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.checklist),
+              icon: Tooltip(message: "Checklist", child: Icon(Icons.checklist_rtl_rounded)),
+              activeIcon: Icon(Icons.checklist_rounded),
               label: 'Checklist',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
+              icon: Tooltip(message: "Settings", child: Icon(Icons.settings_outlined)),
+              activeIcon: Icon(Icons.settings),
               label: 'Settings',
             ),
           ],

@@ -109,22 +109,25 @@ class _ChecklistViewState extends State<ChecklistView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              color: Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
             ),
             child: TextField(
               controller: _textController,
               decoration: InputDecoration(
-                hintText: "Add a new task...",
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                hintText: "What needs to be done?",
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14),
                 border: InputBorder.none,
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add, color: Colors.blueAccent),
-                  onPressed: _submit,
+                suffixIcon: Tooltip(
+                  message: "Add task",
+                  child: IconButton(
+                    icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.blueAccent, size: 22),
+                    onPressed: _submit,
+                  ),
                 ),
               ),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
               onSubmitted: (_) => _submit(),
             ),
           ),
@@ -177,36 +180,46 @@ class _ChecklistViewState extends State<ChecklistView> {
   }
 
   Widget _buildChecklistItem(ChecklistItem item, int index) {
-    return Container(
-      key: ValueKey(item.id),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: item.isCompleted 
-              ? Colors.blueAccent.withOpacity(0.1) 
-              : Colors.white.withOpacity(0.05),
-        ),
-      ),
-      child: ListTile(
-        leading: Checkbox(
-          value: item.isCompleted,
-          onChanged: (_) => widget.onToggle(item),
-          activeColor: Colors.blueAccent,
-          checkColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-        title: Text(
-          item.text,
-          style: TextStyle(
-            color: item.isCompleted ? Colors.white.withOpacity(0.4) : Colors.white,
-            decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+    return Semantics(
+      label: "Task: ${item.text}, ${item.isCompleted ? 'Completed' : 'Active'}",
+      child: Container(
+        key: ValueKey(item.id),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.015),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: item.isCompleted 
+                ? Colors.blueAccent.withOpacity(0.05) 
+                : Colors.white.withOpacity(0.03),
           ),
         ),
-        trailing: IconButton(
-          icon: Icon(Icons.close, color: Colors.white.withOpacity(0.2), size: 18),
-          onPressed: () => widget.onDelete(item.id),
+        child: ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          leading: Checkbox(
+            value: item.isCompleted,
+            onChanged: (_) => widget.onToggle(item),
+            activeColor: Colors.blueAccent.withOpacity(0.8),
+            checkColor: Colors.black,
+            side: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          ),
+          title: Text(
+            item.text,
+            style: TextStyle(
+              fontSize: 14,
+              color: item.isCompleted ? Colors.white.withOpacity(0.3) : Colors.white.withOpacity(0.9),
+              decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          trailing: Tooltip(
+            message: "Delete task",
+            child: IconButton(
+              icon: Icon(Icons.delete_outline_rounded, color: Colors.redAccent.withOpacity(0.4), size: 18),
+              onPressed: () => widget.onDelete(item.id),
+            ),
+          ),
         ),
       ),
     );
