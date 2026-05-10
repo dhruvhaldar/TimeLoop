@@ -123,13 +123,18 @@ class _ChecklistViewState extends State<ChecklistView> {
                     thumbVisibility: true,
                     child: ReorderableListView.builder(
                       padding: EdgeInsets.zero,
+                      buildDefaultDragHandles: false,
                       itemCount: _displayedItems.length,
                       onReorder: (oldIndex, newIndex) {
                         widget.onReorder(oldIndex, newIndex);
                       },
                       itemBuilder: (context, index) {
                         final item = _displayedItems[index];
-                        return _buildChecklistItem(item, index);
+                        return ReorderableDragStartListener(
+                          key: ValueKey(item.id),
+                          index: index,
+                          child: _buildChecklistItem(item, index),
+                        );
                       },
                     ),
                   ),
