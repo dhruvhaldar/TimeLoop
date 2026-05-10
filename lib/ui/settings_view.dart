@@ -92,6 +92,35 @@ class _SettingsViewState extends State<SettingsView> {
                   activeColor: Colors.blueAccent,
                 ),
               ),
+              const SizedBox(height: 16),
+              _buildSettingCard(
+                title: "Timer Layout",
+                subtitle: "Choose between full timestamp or minutes only.",
+                trailing: DropdownButton<TimerFormat>(
+                  value: widget.runtime.timerFormat,
+                  dropdownColor: Colors.grey.shade900,
+                  underline: Container(),
+                  items: const [
+                    DropdownMenuItem(
+                      value: TimerFormat.full,
+                      child: Text("Full (HH:MM:SS.ms)", style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ),
+                    DropdownMenuItem(
+                      value: TimerFormat.minutesOnly,
+                      child: Text("Minutes Only (MM)", style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ),
+                  ],
+                  onChanged: (format) {
+                    if (format != null) {
+                      setState(() {
+                        widget.runtime.timerFormat = format;
+                        PersistenceService.instance.saveSetting('timerFormat', format.name);
+                        widget.runtime.notifyListeners();
+                      });
+                    }
+                  },
+                ),
+              ),
               const SizedBox(height: 30),
               Text(
                 "DATA MANAGEMENT",

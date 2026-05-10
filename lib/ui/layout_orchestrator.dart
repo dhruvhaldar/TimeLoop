@@ -143,7 +143,10 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
   Widget _getSelectedView() {
     switch (_selectedIndex) {
       case 0:
-        return StopwatchView(engine: widget.runtime.stopwatch);
+        return StopwatchView(
+          engine: widget.runtime.stopwatch,
+          timerFormat: widget.runtime.timerFormat,
+        );
       case 1:
         return RemindersView(
           reminders: widget.runtime.reminders,
@@ -189,7 +192,10 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
       case 3:
         return SettingsView(runtime: widget.runtime);
       default:
-        return StopwatchView(engine: widget.runtime.stopwatch);
+        return StopwatchView(
+          engine: widget.runtime.stopwatch,
+          timerFormat: widget.runtime.timerFormat,
+        );
     }
   }
 }

@@ -25,7 +25,7 @@ class ChecklistView extends StatefulWidget {
 
 class _ChecklistViewState extends State<ChecklistView> {
   final _textController = TextEditingController();
-  bool _isAutoSort = true;
+  bool _isAutoSort = false;
 
   List<ChecklistItem> get _displayedItems {
     if (_isAutoSort) {
@@ -73,23 +73,7 @@ class _ChecklistViewState extends State<ChecklistView> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _isAutoSort = !_isAutoSort;
-                      });
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: Icon(
-                      _isAutoSort ? Icons.auto_awesome : Icons.sort,
-                      color: _isAutoSort ? Colors.blueAccent : Colors.white24,
-                      size: 20,
-                    ),
-                    tooltip: _isAutoSort ? "Auto-sort active" : "Manual sorting active",
-                  ),
                   if (widget.items.any((item) => item.isCompleted)) ...[
-                    const SizedBox(width: 16),
                     TextButton.icon(
                       onPressed: widget.onClearCompleted,
                       style: TextButton.styleFrom(
@@ -97,8 +81,8 @@ class _ChecklistViewState extends State<ChecklistView> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      icon: const Icon(Icons.delete_sweep, color: Colors.redAccent, size: 20),
-                      label: const Text("Clear Done", style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                      icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 20),
+                      label: const Text("Clear Done", style: TextStyle(color: Colors.redAccent, fontSize: 11)),
                     ),
                   ],
                 ],
@@ -138,17 +122,9 @@ class _ChecklistViewState extends State<ChecklistView> {
                 : Scrollbar(
                     thumbVisibility: true,
                     child: ReorderableListView.builder(
+                      padding: EdgeInsets.zero,
                       itemCount: _displayedItems.length,
                       onReorder: (oldIndex, newIndex) {
-                        if (_isAutoSort) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Disable Auto-Sort to use custom sorting"),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                          return;
-                        }
                         widget.onReorder(oldIndex, newIndex);
                       },
                       itemBuilder: (context, index) {
@@ -181,9 +157,9 @@ class _ChecklistViewState extends State<ChecklistView> {
 
   Widget _buildChecklistItem(ChecklistItem item, int index) {
     return Semantics(
+      key: ValueKey(item.id),
       label: "Task: ${item.text}, ${item.isCompleted ? 'Completed' : 'Active'}",
       child: Container(
-        key: ValueKey(item.id),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.015),

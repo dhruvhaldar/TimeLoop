@@ -1,14 +1,31 @@
+class StopwatchSave {
+  final Duration duration;
+  final String name;
+
+  StopwatchSave({required this.duration, required this.name});
+
+  Map<String, dynamic> toMap() => {
+    'durationMs': duration.inMilliseconds,
+    'name': name,
+  };
+
+  factory StopwatchSave.fromMap(Map<String, dynamic> map) => StopwatchSave(
+    duration: Duration(milliseconds: map['durationMs']),
+    name: map['name'],
+  );
+}
+
 class StopwatchEngine {
   DateTime? _startUtc;
   Duration _accumulated = Duration.zero;
   bool _running = false;
-  final List<Duration> _saves = <Duration>[];
+  final List<StopwatchSave> _saves = <StopwatchSave>[];
 
   DateTime? get startUtc => _startUtc;
   Duration get accumulated => _accumulated;
 
   bool get isRunning => _running;
-  List<Duration> get saves => List<Duration>.unmodifiable(_saves);
+  List<StopwatchSave> get saves => List<StopwatchSave>.unmodifiable(_saves);
 
   void start(DateTime nowUtc) {
     if (_running) return;
@@ -48,13 +65,12 @@ class StopwatchEngine {
     return _accumulated + nowUtc.toUtc().difference(_startUtc!);
   }
 
-  Duration saveTime(DateTime nowUtc) {
+  void saveTime(DateTime nowUtc, String name) {
     final value = elapsed(nowUtc);
-    _saves.add(value);
-    return value;
+    _saves.add(StopwatchSave(duration: value, name: name));
   }
 
-  void loadSaves(List<Duration> loadedSaves) {
+  void loadSaves(List<StopwatchSave> loadedSaves) {
     _saves.clear();
     _saves.addAll(loadedSaves);
   }

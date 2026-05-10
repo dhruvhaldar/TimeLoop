@@ -2,21 +2,31 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/stopwatch_engine.dart';
 import '../core/persistence_service.dart';
+import '../core/app_runtime.dart';
 
 class StopwatchView extends StatefulWidget {
   final StopwatchEngine engine;
-  const StopwatchView({super.key, required this.engine});
+  final TimerFormat timerFormat;
+  const StopwatchView({super.key, required this.engine, required this.timerFormat});
 
   @override
   State<StopwatchView> createState() => _StopwatchViewState();
 }
 
-class _StopwatchViewState extends State<StopwatchView> {
+class _StopwatchViewState extends State<StopwatchView> with SingleTickerProviderStateMixin {
   Timer? _timer;
+  late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+      lowerBound: 0.6,
+      upperBound: 1.0,
+    )..repeat(reverse: true);
+
     _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
       if (widget.engine.isRunning) {
         setState(() {});
@@ -27,16 +37,19 @@ class _StopwatchViewState extends State<StopwatchView> {
   @override
   void dispose() {
     _timer?.cancel();
+    _pulseController.dispose();
     super.dispose();
   }
 
   String _formatDuration(Duration d) {
+    if (widget.timerFormat == TimerFormat.minutesOnly) {
+      return "${d.inMinutes}";
+    }
     String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String threeDigits(int n) => n.toString().padLeft(3, "0");
     String hours = twoDigits(d.inHours);
     String minutes = twoDigits(d.inMinutes.remainder(60));
     String seconds = twoDigits(d.inSeconds.remainder(60));
-    String ms = threeDigits(d.inMilliseconds.remainder(1000));
+    String ms = (d.inMilliseconds.remainder(1000) ~/ 10).toString().padLeft(2, "0");
     return "$hours:$minutes:$seconds.$ms";
   }
 
@@ -83,71 +96,114 @@ class _StopwatchViewState extends State<StopwatchView> {
                   ),
                 ],
               ),
-              child: Text(
-                _formatDuration(elapsed),
-                style: TextStyle(
-                  fontSize: 72,
-                  fontWeight: FontWeight.w900, // Ultra bold
-                  color: Colors.cyanAccent, // Neon digital color
-                  letterSpacing: -1,
-                  fontFamily: 'Consolas', // Digital-feeling system font on Windows
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                  shadows: [
-                    Shadow(
-                      color: Colors.cyanAccent.withOpacity(0.5),
-                      blurRadius: 20,
+              child: AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  final glowOpacity = widget.engine.isRunning ? _pulseController.value : 0.6;
+                  final timeStr = _formatDuration(elapsed);
+                  
+                  if (widget.timerFormat == TimerFormat.minutesOnly) {
+                    return FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        timeStr,
+                        style: TextStyle(
+                          fontSize: 120, // Much larger for single unit
+                          fontWeight: FontWeight.w900,
+                          color: Colors.cyanAccent,
+                          fontFamily: 'Lucida Console',
+                          shadows: [
+                            Shadow(
+                              color: Colors.cyanAccent.withOpacity(glowOpacity * 0.5),
+                              blurRadius: 20 * glowOpacity,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final parts = timeStr.split('.');
+                  
+                  return FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 84,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.cyanAccent,
+                          letterSpacing: 2,
+                          fontFamily: 'Lucida Console',
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                          shadows: [
+                            Shadow(
+                              color: Colors.cyanAccent.withOpacity(glowOpacity * 0.5),
+                              blurRadius: 20 * glowOpacity,
+                            ),
+                          ],
+                        ),
+                        children: [
+                          TextSpan(text: parts[0]),
+                          TextSpan(
+                            text: ".${parts[1]}",
+                            style: TextStyle(
+                              fontSize: 48, // Significantly smaller
+                              color: Colors.cyanAccent.withOpacity(0.3), // Lower opacity
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
           const SizedBox(height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildActionButton(
-                onPressed: () {
-                  setState(() {
-                    if (widget.engine.isRunning) {
-                      widget.engine.pause(DateTime.now());
-                    } else {
-                      widget.engine.start(DateTime.now());
-                    }
-                  });
-                },
-                icon: widget.engine.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                label: widget.engine.isRunning ? "PAUSE" : "START",
-                tooltip: widget.engine.isRunning ? "Pause timer" : "Start timer",
-                color: widget.engine.isRunning ? Colors.orangeAccent : Colors.greenAccent,
-              ),
-              const SizedBox(width: 32),
-              _buildActionButton(
-                onPressed: () async {
-                  setState(() {
-                    widget.engine.saveTime(DateTime.now());
-                  });
-                  await PersistenceService.instance.saveSaves(widget.engine.saves);
-                },
-                icon: Icons.bookmark_add_outlined,
-                label: "LAP",
-                tooltip: "Record a lap time",
-                color: Colors.blueAccent,
-                enabled: widget.engine.isRunning,
-              ),
-              const SizedBox(width: 32),
-              _buildActionButton(
-                onPressed: () async {
-                  setState(() {
-                    widget.engine.reset();
-                  });
-                },
-                icon: Icons.restart_alt_rounded,
-                label: "RESET",
-                tooltip: "Reset the timer",
-                color: Colors.redAccent,
-              ),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildActionButton(
+                  onPressed: () {
+                    setState(() {
+                      if (widget.engine.isRunning) {
+                        widget.engine.pause(DateTime.now());
+                      } else {
+                        widget.engine.start(DateTime.now());
+                      }
+                    });
+                  },
+                  icon: widget.engine.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  label: widget.engine.isRunning ? "PAUSE" : "START",
+                  tooltip: widget.engine.isRunning ? "Pause timer" : "Start timer",
+                  color: widget.engine.isRunning ? Colors.orangeAccent : Colors.greenAccent,
+                ),
+                const SizedBox(width: 32),
+                _buildActionButton(
+                  onPressed: () => _showSaveDialog(context),
+                  icon: Icons.save_outlined,
+                  label: "SAVE",
+                  tooltip: "Save timestamp with a name",
+                  color: Colors.blueAccent,
+                  enabled: widget.engine.isRunning,
+                ),
+                const SizedBox(width: 32),
+                _buildActionButton(
+                  onPressed: () async {
+                    setState(() {
+                      widget.engine.reset();
+                    });
+                  },
+                  icon: Icons.restart_alt_rounded,
+                  label: "RESET",
+                  tooltip: "Reset the timer",
+                  color: Colors.redAccent,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 40),
           Expanded(
@@ -218,7 +274,7 @@ class _StopwatchViewState extends State<StopwatchView> {
         itemCount: saves.length,
         itemBuilder: (context, index) {
           final saveIndex = saves.length - index;
-          final saveTime = saves[saves.length - 1 - index];
+          final save = saves[saves.length - 1 - index];
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -226,28 +282,74 @@ class _StopwatchViewState extends State<StopwatchView> {
               color: Colors.white.withOpacity(0.03),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "SAVE $saveIndex",
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                Text(
-                  _formatDuration(saveTime),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
-                  onPressed: () => _confirmDeleteSave(context, saves.length - 1 - index),
-                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      save.name.isEmpty ? "SAVE $saveIndex" : save.name,
+                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _formatDuration(save.duration),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: () => _confirmDeleteSave(context, saves.length - 1 - index),
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showSaveDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey.shade900,
+        title: const Text("Save Timestamp", style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: "Enter a name (e.g. Lap 1, Split, etc.)",
+            hintStyle: TextStyle(color: Colors.white24),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+          ),
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              Navigator.pop(context);
+              setState(() {
+                widget.engine.saveTime(DateTime.now(), name);
+              });
+              await PersistenceService.instance.saveSaves(widget.engine.saves);
+            },
+            child: const Text("SAVE", style: TextStyle(color: Colors.blueAccent)),
+          ),
+        ],
       ),
     );
   }

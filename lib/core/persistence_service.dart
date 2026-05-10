@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'reminder_schedule.dart';
 import 'checklist_item.dart';
+import 'stopwatch_engine.dart';
 
 class PersistenceService {
   static final PersistenceService instance = PersistenceService._();
@@ -91,16 +92,16 @@ class PersistenceService {
 
   // --- Laps ---
 
-  Future<void> saveSaves(List<Duration> saves) async {
+  Future<void> saveSaves(List<StopwatchSave> saves) async {
     final data = await _readAll();
-    data['laps'] = saves.map((d) => d.inMilliseconds).toList();
+    data['laps'] = saves.map((s) => s.toMap()).toList();
     await _writeAll(data);
   }
 
-  Future<List<Duration>> loadSaves() async {
+  Future<List<StopwatchSave>> loadSaves() async {
     final data = await _readAll();
     final List<dynamic> laps = data['laps'] ?? [];
-    return laps.map((ms) => Duration(milliseconds: ms as int)).toList();
+    return laps.map((map) => StopwatchSave.fromMap(Map<String, dynamic>.from(map))).toList();
   }
 
   // --- Stopwatch State ---
@@ -205,5 +206,19 @@ class PersistenceService {
 
   Future<void> clearAllData() async {
     await _writeAll({});
+  }
+
+  Future<void> saveSetting(String key, String value) async {
+    final data = await _readAll();
+    final Map<String, dynamic> settings = data['settings'] ?? {};
+    settings[key] = value;
+    data['settings'] = settings;
+    await _writeAll(data);
+  }
+
+  Future<String?> loadSetting(String key) async {
+    final data = await _readAll();
+    final Map<String, dynamic> settings = data['settings'] ?? {};
+    return settings[key] as String?;
   }
 }

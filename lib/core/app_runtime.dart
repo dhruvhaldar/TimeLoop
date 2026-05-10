@@ -8,6 +8,7 @@ import 'checklist_item.dart';
 import 'package:flutter/material.dart';
 
 enum ReminderMode { beepOnly, beepAndPopup }
+enum TimerFormat { full, minutesOnly }
 
 class AppRuntime with ChangeNotifier {
   AppRuntime({
@@ -58,6 +59,11 @@ class AppRuntime with ChangeNotifier {
         accumulated: Duration(milliseconds: swState['accumulatedMs']),
       );
     }
+
+    final formatStr = await PersistenceService.instance.loadSetting('timerFormat');
+    if (formatStr != null) {
+      timerFormat = TimerFormat.values.firstWhere((e) => e.name == formatStr, orElse: () => TimerFormat.full);
+    }
   }
 
   final StopwatchEngine stopwatch;
@@ -66,6 +72,7 @@ class AppRuntime with ChangeNotifier {
   Timer? _ticker;
   bool debugEnabled = false;
   ReminderMode reminderMode = ReminderMode.beepAndPopup;
+  TimerFormat timerFormat = TimerFormat.full;
 
   void _startTicker() {
     _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
