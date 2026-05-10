@@ -18,6 +18,24 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    widget.runtime.addListener(_handleRuntimeChange);
+  }
+
+  @override
+  void dispose() {
+    widget.runtime.removeListener(_handleRuntimeChange);
+    super.dispose();
+  }
+
+  void _handleRuntimeChange() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: LayoutBuilder(

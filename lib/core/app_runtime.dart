@@ -5,10 +5,11 @@ import 'stopwatch_engine.dart';
 import 'platform_service.dart';
 import 'persistence_service.dart';
 import 'checklist_item.dart';
+import 'package:flutter/material.dart';
 
 enum ReminderMode { beepOnly, beepAndPopup }
 
-class AppRuntime {
+class AppRuntime with ChangeNotifier {
   AppRuntime({
     StopwatchEngine? stopwatch,
     List<ReminderSchedule>? reminders,
@@ -16,15 +17,31 @@ class AppRuntime {
   })  : stopwatch = stopwatch ?? StopwatchEngine(),
         reminders = reminders ?? <ReminderSchedule>[],
         checklistItems = checklistItems ?? <ChecklistItem>[] {
+    _log('AppRuntime Initializing...');
     _startTicker();
-    _loadState();
+    _loadState().then((_) {
+      _log('Initial state load complete.');
+      notifyListeners();
+    }).catchError((e) {
+      _log('Error loading initial state: $e');
+    });
+  }
+
+  void _log(String message) {
+    print(message);
+    try {
+      File('runtime.log').writeAsStringSync('${DateTime.now().toIso8601String()}: $message\n', mode: FileMode.append);
+    } catch (e) {}
   }
 
   Future<void> _loadState() async {
+    _log('Loading state...');
     final saves = await PersistenceService.instance.loadSaves();
+    _log('Loaded ${saves.length} stopwatch saves.');
     stopwatch.loadSaves(saves);
     
     final items = await PersistenceService.instance.loadChecklist();
+    _log('Loaded ${items.length} checklist items.');
     checklistItems.clear();
     checklistItems.addAll(items);
 
@@ -102,16 +119,19 @@ class AppRuntime {
     );
     checklistItems.add(item);
     PersistenceService.instance.saveChecklistItem(item, position: checklistItems.length - 1);
+    notifyListeners();
   }
 
   void toggleChecklistItem(ChecklistItem item) {
     item.isCompleted = !item.isCompleted;
     PersistenceService.instance.saveChecklistItem(item);
+    notifyListeners();
   }
 
   void deleteChecklistItem(String id) {
     checklistItems.removeWhere((i) => i.id == id);
     PersistenceService.instance.deleteChecklistItem(id);
+    notifyListeners();
   }
 
   void clearCompletedChecklist() {
@@ -120,6 +140,7 @@ class AppRuntime {
       checklistItems.remove(item);
       PersistenceService.instance.deleteChecklistItem(item.id);
     }
+    notifyListeners();
   }
 
   void reorderChecklistItem(int oldIndex, int newIndex) {
@@ -129,6 +150,7 @@ class AppRuntime {
     final item = checklistItems.removeAt(oldIndex);
     checklistItems.insert(newIndex, item);
     PersistenceService.instance.saveChecklistOrder(checklistItems);
+    notifyListeners();
   }
 
   Future<void> clearAllData() async {

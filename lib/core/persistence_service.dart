@@ -27,6 +27,13 @@ class PersistenceService {
     return _database!;
   }
 
+  void _log(String message) {
+    print(message);
+    try {
+      File('persistence.log').writeAsStringSync('$message\n', mode: FileMode.append);
+    } catch (e) {}
+  }
+
   Future<Database> _initDB() async {
     if (kIsWeb) {
       throw UnimplementedError("Web persistence not implemented yet.");
@@ -34,11 +41,19 @@ class PersistenceService {
     
     final directory = await getApplicationSupportDirectory();
     String path = join(directory.path, 'timeloop.db');
+    _log('Initializing DB at path: $path');
+    
     return await openDatabase(
       path,
       version: 4,
-      onCreate: _createDB,
-      onUpgrade: _onUpgrade,
+      onCreate: (db, version) async {
+        _log('Creating DB version $version');
+        await _createDB(db, version);
+      },
+      onUpgrade: (db, oldV, newV) async {
+        _log('Updating DB from $oldV to $newV');
+        await _onUpgrade(db, oldV, newV);
+      },
     );
   }
 
@@ -177,6 +192,7 @@ class PersistenceService {
   }
 
   Future<void> saveChecklistItem(ChecklistItem item, {int? position}) async {
+    _log('Saving checklist item: ${item.text}');
     final db = await database;
     final data = item.toMap();
     if (position != null) {
