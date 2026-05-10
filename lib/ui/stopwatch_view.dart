@@ -181,33 +181,36 @@ class _StopwatchViewState extends State<StopwatchView> {
       );
     }
 
-    return ListView.builder(
-      itemCount: saves.length,
-      itemBuilder: (context, index) {
-        final saveIndex = saves.length - index;
-        final saveTime = saves[saves.length - 1 - index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "SAVE $saveIndex",
-                style: TextStyle(color: Colors.white.withOpacity(0.5)),
-              ),
-              Text(
-                _formatDuration(saveTime),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        );
-      },
+    return Scrollbar(
+      thumbVisibility: true,
+      child: ListView.builder(
+        itemCount: saves.length,
+        itemBuilder: (context, index) {
+          final saveIndex = saves.length - index;
+          final saveTime = saves[saves.length - 1 - index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "SAVE $saveIndex",
+                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                ),
+                Text(
+                  _formatDuration(saveTime),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -122,24 +122,27 @@ class _ChecklistViewState extends State<ChecklistView> {
           Expanded(
             child: widget.items.isEmpty
                 ? _buildEmptyState()
-                : ReorderableListView.builder(
-                    itemCount: _displayedItems.length,
-                    onReorder: (oldIndex, newIndex) {
-                      if (_isAutoSort) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Disable Auto-Sort to use custom sorting"),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                        return;
-                      }
-                      widget.onReorder(oldIndex, newIndex);
-                    },
-                    itemBuilder: (context, index) {
-                      final item = _displayedItems[index];
-                      return _buildChecklistItem(item, index);
-                    },
+                : Scrollbar(
+                    thumbVisibility: true,
+                    child: ReorderableListView.builder(
+                      itemCount: _displayedItems.length,
+                      onReorder: (oldIndex, newIndex) {
+                        if (_isAutoSort) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Disable Auto-Sort to use custom sorting"),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                          return;
+                        }
+                        widget.onReorder(oldIndex, newIndex);
+                      },
+                      itemBuilder: (context, index) {
+                        final item = _displayedItems[index];
+                        return _buildChecklistItem(item, index);
+                      },
+                    ),
                   ),
           ),
         ],

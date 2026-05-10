@@ -109,4 +109,12 @@ class AppRuntime {
     checklistItems.insert(newIndex, item);
     PersistenceService.instance.saveChecklistOrder(checklistItems);
   }
+
+  Future<void> clearAllData() async {
+    await PersistenceService.instance.clearAllData();
+    reminders.clear();
+    checklistItems.clear();
+    stopwatch.reset();
+    stopwatch.loadSaves([]);
+  }
 }

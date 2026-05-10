@@ -20,124 +20,148 @@ class _SettingsViewState extends State<SettingsView> {
     return Container(
       padding: const EdgeInsets.all(24),
       color: Colors.black,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 40),
-          Text(
-            "SETTINGS",
-            style: TextStyle(
-              color: Colors.grey.shade400,
-              letterSpacing: 4,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 30),
-          _buildSettingCard(
-            title: "Debug Logging",
-            subtitle: "Enable logging to timeloop_debug.log for troubleshooting.",
-            trailing: Switch(
-              value: widget.runtime.debugEnabled,
-              onChanged: (value) {
-                setState(() {
-                  widget.runtime.debugEnabled = value;
-                  PlatformService.instance.debugEnabled = value;
-                });
-              },
-              activeColor: Colors.blueAccent,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildSettingCard(
-            title: "Reminder Alert Mode",
-            subtitle: "Choose between just hearing a beep or beep + popup alert.",
-            trailing: DropdownButton<ReminderMode>(
-              value: widget.runtime.reminderMode,
-              dropdownColor: Colors.grey.shade900,
-              underline: Container(),
-              items: const [
-                DropdownMenuItem(
-                  value: ReminderMode.beepOnly,
-                  child: Text("Beep Only", style: TextStyle(color: Colors.white)),
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              Text(
+                "SETTINGS",
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.bold,
                 ),
-                DropdownMenuItem(
-                  value: ReminderMode.beepAndPopup,
-                  child: Text("Beep + Popup", style: TextStyle(color: Colors.white)),
+              ),
+              const SizedBox(height: 30),
+              _buildSettingCard(
+                title: "Debug Logging",
+                subtitle: "Enable logging to timeloop_debug.log for troubleshooting.",
+                trailing: Switch(
+                  value: widget.runtime.debugEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      widget.runtime.debugEnabled = value;
+                      PlatformService.instance.debugEnabled = value;
+                    });
+                  },
+                  activeColor: Colors.blueAccent,
                 ),
-              ],
-              onChanged: (mode) {
-                if (mode != null) {
-                  setState(() {
-                    widget.runtime.reminderMode = mode;
-                  });
-                }
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildSettingCard(
-            title: "Always on Top",
-            subtitle: "Keep the TimeLoop window above all other applications.",
-            trailing: Switch(
-              value: _alwaysOnTop,
-              onChanged: (value) async {
-                setState(() {
-                  _alwaysOnTop = value;
-                });
-                await PlatformService.instance.setAlwaysOnTop(value);
-              },
-              activeColor: Colors.blueAccent,
-            ),
-          ),
-          const SizedBox(height: 30),
-          Text(
-            "DATA MANAGEMENT",
-            style: TextStyle(
-              color: Colors.grey.shade400,
-              letterSpacing: 4,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildSettingCard(
-            title: "Backup Data",
-            subtitle: "Export all data to 'timeloop_backup.json' in the app folder.",
-            trailing: IconButton(
-              onPressed: () async {
-                try {
-                  final path = await PersistenceService.instance.exportBackup();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Backup saved to: $path"),
-                      backgroundColor: Colors.blueAccent,
+              ),
+              const SizedBox(height: 16),
+              _buildSettingCard(
+                title: "Reminder Alert Mode",
+                subtitle: "Choose between just hearing a beep or beep + popup alert.",
+                trailing: DropdownButton<ReminderMode>(
+                  value: widget.runtime.reminderMode,
+                  dropdownColor: Colors.grey.shade900,
+                  underline: Container(),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ReminderMode.beepOnly,
+                      child: Text("Beep Only", style: TextStyle(color: Colors.white)),
                     ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Backup failed: $e"), backgroundColor: Colors.redAccent),
-                  );
-                }
-              },
-              icon: const Icon(Icons.backup, color: Colors.blueAccent),
-            ),
+                    DropdownMenuItem(
+                      value: ReminderMode.beepAndPopup,
+                      child: Text("Beep + Popup", style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                  onChanged: (mode) {
+                    if (mode != null) {
+                      setState(() {
+                        widget.runtime.reminderMode = mode;
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSettingCard(
+                title: "Always on Top",
+                subtitle: "Keep the TimeLoop window above all other applications.",
+                trailing: Switch(
+                  value: _alwaysOnTop,
+                  onChanged: (value) async {
+                    setState(() {
+                      _alwaysOnTop = value;
+                    });
+                    await PlatformService.instance.setAlwaysOnTop(value);
+                  },
+                  activeColor: Colors.blueAccent,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Text(
+                "DATA MANAGEMENT",
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSettingCard(
+                title: "Backup Data",
+                subtitle: "Export all data to 'timeloop_backup.json' in the app folder.",
+                trailing: IconButton(
+                  onPressed: () async {
+                    try {
+                      final path = await PersistenceService.instance.exportBackup();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Backup saved to: $path"),
+                          backgroundColor: Colors.blueAccent,
+                        ),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Backup failed: $e"), backgroundColor: Colors.redAccent),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.backup, color: Colors.blueAccent),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSettingCard(
+                title: "Restore Data",
+                subtitle: "Import data from 'timeloop_backup.json' (Destructive).",
+                trailing: IconButton(
+                  onPressed: () => _confirmRestore(context),
+                  icon: const Icon(Icons.restore, color: Colors.orangeAccent),
+                ),
+              ),
+              const SizedBox(height: 30),
+              Text(
+                "DANGER ZONE",
+                style: TextStyle(
+                  color: Colors.red.shade400,
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSettingCard(
+                title: "Clear All Data",
+                subtitle: "Permanently delete all reminders, checklist items, and history.",
+                trailing: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red.withOpacity(0.1)),
+                  onPressed: () => _confirmClearAll(context),
+                  child: const Text("Clear Everything", style: TextStyle(color: Colors.redAccent)),
+                ),
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: Text(
+                  "TimeLoop v1.0.0",
+                  style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 12),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          _buildSettingCard(
-            title: "Restore Data",
-            subtitle: "Import data from 'timeloop_backup.json' (Destructive).",
-            trailing: IconButton(
-              onPressed: () => _confirmRestore(context),
-              icon: const Icon(Icons.restore, color: Colors.orangeAccent),
-            ),
-          ),
-          const Spacer(),
-          Center(
-            child: Text(
-              "TimeLoop v1.0.0",
-              style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 12),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -172,6 +196,40 @@ class _SettingsViewState extends State<SettingsView> {
             ),
           ),
           trailing,
+        ],
+      ),
+    );
+  }
+
+  void _confirmClearAll(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey.shade900,
+        title: const Text("Clear All Data?", style: TextStyle(color: Colors.white)),
+        content: const Text(
+          "This action is irreversible. All your settings, reminders, and checklist items will be wiped.",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await widget.runtime.clearAllData();
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("All data has been cleared."),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            },
+            child: const Text("CLEAR EVERYTHING", style: TextStyle(color: Colors.redAccent)),
+          ),
         ],
       ),
     );

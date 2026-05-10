@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
 import 'reminder_schedule.dart';
 import 'checklist_item.dart';
 
@@ -11,6 +12,14 @@ class PersistenceService {
   PersistenceService._();
 
   Database? _database;
+  String? _savesPath;
+
+  Future<String> get _lapsFilePath async {
+    if (_savesPath != null) return _savesPath!;
+    final directory = await getApplicationSupportDirectory();
+    _savesPath = join(directory.path, 'saved_times.txt');
+    return _savesPath!;
+  }
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -20,13 +29,11 @@ class PersistenceService {
 
   Future<Database> _initDB() async {
     if (kIsWeb) {
-      // For web, we might need a different approach, but for now we'll use a mock
-      // or a simple local storage if we had the dependency.
-      // Returning a mock database or throwing if not supported.
       throw UnimplementedError("Web persistence not implemented yet.");
     }
-
-    String path = join(await getDatabasesPath(), 'timeloop.db');
+    
+    final directory = await getApplicationSupportDirectory();
+    String path = join(directory.path, 'timeloop.db');
     return await openDatabase(
       path,
       version: 3,
@@ -95,13 +102,15 @@ class PersistenceService {
   }
 
   Future<void> saveSaves(List<Duration> saves) async {
-    final file = File('saved_times.txt');
+    final path = await _lapsFilePath;
+    final file = File(path);
     final content = saves.map((d) => d.inMilliseconds.toString()).join('\n');
     await file.writeAsString(content);
   }
 
   Future<List<Duration>> loadSaves() async {
-    final file = File('saved_times.txt');
+    final path = await _lapsFilePath;
+    final file = File(path);
     if (!await file.exists()) return [];
     
     final content = await file.readAsString();
@@ -216,6 +225,21 @@ class PersistenceService {
     if (backup['laps'] != null) {
       final laps = (backup['laps'] as List).map((ms) => Duration(milliseconds: ms as int)).toList();
       await saveSaves(laps);
+    }
+  }
+
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('reminders');
+      await txn.delete('checklist');
+      await txn.delete('laps');
+    });
+    
+    final path = await _lapsFilePath;
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
     }
   }
 }
