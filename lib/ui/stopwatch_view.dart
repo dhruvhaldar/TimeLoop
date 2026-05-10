@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/stopwatch_engine.dart';
 import '../core/persistence_service.dart';
 import '../core/app_runtime.dart';
+import 'digit_flipper.dart';
 
 class StopwatchView extends StatefulWidget {
   final StopwatchEngine engine;
@@ -99,61 +100,84 @@ class _StopwatchViewState extends State<StopwatchView> with SingleTickerProvider
               child: AnimatedBuilder(
                 animation: _pulseController,
                 builder: (context, child) {
-                  final glowOpacity = widget.engine.isRunning ? _pulseController.value : 0.6;
+                  final glowOpacity = widget.engine.isRunning ? _pulseController.value : 0.0;
                   final timeStr = _formatDuration(elapsed);
+                  final isRunning = widget.engine.isRunning;
+                  final activeColor = isRunning ? Colors.cyanAccent : Colors.white.withOpacity(0.3);
+                  final shadowColor = isRunning ? Colors.cyanAccent : Colors.transparent;
                   
                   if (widget.timerFormat == TimerFormat.minutesOnly) {
+                    final chars = timeStr.split('');
                     return FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text(
-                        timeStr,
-                        style: TextStyle(
-                          fontSize: 120, // Much larger for single unit
-                          fontWeight: FontWeight.w900,
-                          color: Colors.cyanAccent,
-                          fontFamily: 'Lucida Console',
-                          shadows: [
-                            Shadow(
-                              color: Colors.cyanAccent.withOpacity(glowOpacity * 0.5),
-                              blurRadius: 20 * glowOpacity,
-                            ),
-                          ],
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: chars.map((c) => DigitFlipper(
+                          char: c,
+                          style: TextStyle(
+                            fontSize: 120,
+                            fontWeight: FontWeight.w900,
+                            color: activeColor,
+                            fontFamily: 'Lucida Console',
+                            shadows: [
+                              Shadow(
+                                color: shadowColor.withOpacity(glowOpacity * 0.5),
+                                blurRadius: 20 * glowOpacity,
+                              ),
+                            ],
+                          ),
+                        )).toList(),
                       ),
                     );
                   }
 
                   final parts = timeStr.split('.');
+                  final mainChars = parts[0].split('');
+                  final msChars = parts[1].split('');
                   
                   return FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 84,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.cyanAccent,
-                          letterSpacing: 2,
-                          fontFamily: 'Lucida Console',
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          shadows: [
-                            Shadow(
-                              color: Colors.cyanAccent.withOpacity(glowOpacity * 0.5),
-                              blurRadius: 20 * glowOpacity,
-                            ),
-                          ],
-                        ),
-                        children: [
-                          TextSpan(text: parts[0]),
-                          TextSpan(
-                            text: ".${parts[1]}",
-                            style: TextStyle(
-                              fontSize: 48, // Significantly smaller
-                              color: Colors.cyanAccent.withOpacity(0.3), // Lower opacity
-                            ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        ...mainChars.map((c) => DigitFlipper(
+                          char: c,
+                          style: TextStyle(
+                            fontSize: 84,
+                            fontWeight: FontWeight.w900,
+                            color: activeColor,
+                            letterSpacing: 2,
+                            fontFamily: 'Lucida Console',
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                            shadows: [
+                              Shadow(
+                                color: shadowColor.withOpacity(glowOpacity * 0.5),
+                                blurRadius: 20 * glowOpacity,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        )),
+                        Text(
+                          ".",
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w900,
+                            color: activeColor.withOpacity(isRunning ? 0.3 : 0.1),
+                            fontFamily: 'Lucida Console',
+                          ),
+                        ),
+                        ...msChars.map((c) => DigitFlipper(
+                          char: c,
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w900,
+                            color: activeColor.withOpacity(isRunning ? 0.3 : 0.1),
+                            fontFamily: 'Lucida Console',
+                          ),
+                        )),
+                      ],
                     ),
                   );
                 },
