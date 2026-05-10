@@ -27,6 +27,15 @@ class AppRuntime {
     final items = await PersistenceService.instance.loadChecklist();
     checklistItems.clear();
     checklistItems.addAll(items);
+
+    final swState = await PersistenceService.instance.loadStopwatchState();
+    if (swState != null) {
+      stopwatch.restoreState(
+        isRunning: swState['isRunning'] == 1,
+        startUtc: swState['startUtc'] != null ? DateTime.parse(swState['startUtc']) : null,
+        accumulated: Duration(milliseconds: swState['accumulatedMs']),
+      );
+    }
   }
 
   final StopwatchEngine stopwatch;
@@ -45,8 +54,20 @@ class AppRuntime {
           mode: FileMode.append,
         );
       }
+      
+      // Save stopwatch state periodically
+      _saveStopwatchState();
+
       reconcileReminders(now);
     });
+  }
+
+  void _saveStopwatchState() {
+    PersistenceService.instance.saveStopwatchState(
+      isRunning: stopwatch.isRunning,
+      startUtc: stopwatch.startUtc,
+      accumulatedMs: stopwatch.accumulated.inMilliseconds,
+    );
   }
 
   void reconcileReminders(DateTime nowUtc) {

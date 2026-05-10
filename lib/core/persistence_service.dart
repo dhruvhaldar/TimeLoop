@@ -36,7 +36,7 @@ class PersistenceService {
     String path = join(directory.path, 'timeloop.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -54,6 +54,16 @@ class PersistenceService {
     }
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE checklist ADD COLUMN position INTEGER DEFAULT 0');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS stopwatch_state (
+          id INTEGER PRIMARY KEY,
+          isRunning INTEGER,
+          startUtc TEXT,
+          accumulatedMs INTEGER
+        )
+      ''');
     }
   }
 
@@ -82,6 +92,15 @@ class PersistenceService {
         text TEXT,
         isCompleted INTEGER,
         position INTEGER
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE stopwatch_state (
+        id INTEGER PRIMARY KEY,
+        isRunning INTEGER,
+        startUtc TEXT,
+        accumulatedMs INTEGER
       )
     ''');
   }
@@ -121,6 +140,32 @@ class PersistenceService {
         .where((s) => s.isNotEmpty)
         .map((s) => Duration(milliseconds: int.parse(s)))
         .toList();
+  }
+
+  // --- Stopwatch State ---
+
+  Future<Map<String, dynamic>?> loadStopwatchState() async {
+    final db = await database;
+    final results = await db.query('stopwatch_state', where: 'id = 1');
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<void> saveStopwatchState({
+    required bool isRunning,
+    DateTime? startUtc,
+    required int accumulatedMs,
+  }) async {
+    final db = await database;
+    await db.insert(
+      'stopwatch_state',
+      {
+        'id': 1,
+        'isRunning': isRunning ? 1 : 0,
+        'startUtc': startUtc?.toIso8601String(),
+        'accumulatedMs': accumulatedMs,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   // --- Checklist Methods ---

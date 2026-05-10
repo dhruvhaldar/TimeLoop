@@ -4,6 +4,9 @@ class StopwatchEngine {
   bool _running = false;
   final List<Duration> _saves = <Duration>[];
 
+  DateTime? get startUtc => _startUtc;
+  Duration get accumulated => _accumulated;
+
   bool get isRunning => _running;
   List<Duration> get saves => List<Duration>.unmodifiable(_saves);
 
@@ -45,6 +48,16 @@ class StopwatchEngine {
   void loadSaves(List<Duration> loadedSaves) {
     _saves.clear();
     _saves.addAll(loadedSaves);
+  }
+
+  void restoreState({
+    required bool isRunning,
+    DateTime? startUtc,
+    required Duration accumulated,
+  }) {
+    _running = isRunning;
+    _startUtc = startUtc;
+    _accumulated = accumulated;
   }
 
   Duration reconcileAfterWake(DateTime wakeUtc) {
