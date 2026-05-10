@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/app_runtime.dart';
 import 'core/platform_service.dart';
 import 'ui/layout_orchestrator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
   
   // Initialize Platform Services (Notifications, Window Management)
   await PlatformService.instance.init();

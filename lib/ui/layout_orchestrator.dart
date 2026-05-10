@@ -140,19 +140,13 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
         return RemindersView(
           reminders: widget.runtime.reminders,
           onToggle: (reminder) {
-            setState(() {
-              reminder.active = !reminder.active;
-            });
+            widget.runtime.toggleReminder(reminder);
           },
           onDelete: (reminder) {
-            setState(() {
-              widget.runtime.reminders.remove(reminder);
-            });
+            widget.runtime.deleteReminder(reminder);
           },
           onAdd: (reminder) {
-            setState(() {
-              widget.runtime.reminders.add(reminder);
-            });
+            widget.runtime.addReminder(reminder);
           },
         );
       case 2:

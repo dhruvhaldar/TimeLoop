@@ -45,6 +45,11 @@ class AppRuntime with ChangeNotifier {
     checklistItems.clear();
     checklistItems.addAll(items);
 
+    final loadedReminders = await PersistenceService.instance.loadReminders();
+    _log('Loaded ${loadedReminders.length} reminders.');
+    reminders.clear();
+    reminders.addAll(loadedReminders);
+
     final swState = await PersistenceService.instance.loadStopwatchState();
     if (swState != null) {
       stopwatch.restoreState(
@@ -108,6 +113,37 @@ class AppRuntime with ChangeNotifier {
 
   void dispose() {
     _ticker?.cancel();
+  }
+
+  // --- Reminder Actions ---
+
+  void addReminder(ReminderSchedule reminder) {
+    reminders.add(reminder);
+    PersistenceService.instance.saveReminder(reminder);
+    notifyListeners();
+  }
+
+  void toggleReminder(ReminderSchedule reminder) {
+    reminder.active = !reminder.active;
+    PersistenceService.instance.saveReminder(reminder);
+    notifyListeners();
+  }
+
+  void deleteReminder(ReminderSchedule reminder) {
+    reminders.remove(reminder);
+    // Note: In JSON mode, we save the whole list or delete from it.
+    // My PersistenceService saveReminder handles upsert, but I need a delete.
+    _saveAllReminders();
+    notifyListeners();
+  }
+
+  void _saveAllReminders() {
+    // For now, I'll just save each one, but in JSON it's better to save the list.
+    // I'll add a deleteReminder to PersistenceService.
+    PersistenceService.instance.deleteReminder(reminderId: reminders.isEmpty ? null : reminders.first.id, all: true);
+    for (final r in reminders) {
+      PersistenceService.instance.saveReminder(r);
+    }
   }
 
   // --- Checklist Actions ---

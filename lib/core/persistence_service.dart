@@ -1,8 +1,6 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'dart:convert';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'reminder_schedule.dart';
 import 'checklist_item.dart';
@@ -11,158 +9,105 @@ class PersistenceService {
   static final PersistenceService instance = PersistenceService._();
   PersistenceService._();
 
-  Database? _database;
-  String? _savesPath;
-
-  Future<String> get _lapsFilePath async {
-    if (_savesPath != null) return _savesPath!;
+  Future<File> get _dataFile async {
     final directory = await getApplicationSupportDirectory();
-    _savesPath = join(directory.path, 'saved_times.txt');
-    return _savesPath!;
+    return File(join(directory.path, 'timeloop_v2_data.json'));
   }
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB();
-    return _database!;
+  Future<Map<String, dynamic>> _readAll() async {
+    try {
+      final file = await _dataFile;
+      if (!await file.exists()) return {};
+      final content = await file.readAsString();
+      return jsonDecode(content);
+    } catch (e) {
+      _log('Read error: $e');
+      return {};
+    }
+  }
+
+  Future<void> _writeAll(Map<String, dynamic> data) async {
+    try {
+      final file = await _dataFile;
+      await file.writeAsString(jsonEncode(data));
+      _log('Data saved to: ${file.path}');
+    } catch (e) {
+      _log('Write error: $e');
+    }
   }
 
   void _log(String message) {
     print(message);
     try {
-      File('persistence.log').writeAsStringSync('$message\n', mode: FileMode.append);
+      // Log to a file in the same directory as data for debugging
+      getApplicationSupportDirectory().then((dir) {
+        File(join(dir.path, 'debug.log')).writeAsStringSync('${DateTime.now()}: $message\n', mode: FileMode.append);
+      });
     } catch (e) {}
   }
 
-  Future<Database> _initDB() async {
-    if (kIsWeb) {
-      throw UnimplementedError("Web persistence not implemented yet.");
-    }
-    
-    final directory = await getApplicationSupportDirectory();
-    String path = join(directory.path, 'timeloop.db');
-    _log('Initializing DB at path: $path');
-    
-    return await openDatabase(
-      path,
-      version: 4,
-      onCreate: (db, version) async {
-        _log('Creating DB version $version');
-        await _createDB(db, version);
-      },
-      onUpgrade: (db, oldV, newV) async {
-        _log('Updating DB from $oldV to $newV');
-        await _onUpgrade(db, oldV, newV);
-      },
-    );
-  }
-
-  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS checklist (
-          id TEXT PRIMARY KEY,
-          text TEXT,
-          isCompleted INTEGER
-        )
-      ''');
-    }
-    if (oldVersion < 3) {
-      await db.execute('ALTER TABLE checklist ADD COLUMN position INTEGER DEFAULT 0');
-    }
-    if (oldVersion < 4) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS stopwatch_state (
-          id INTEGER PRIMARY KEY,
-          isRunning INTEGER,
-          startUtc TEXT,
-          accumulatedMs INTEGER
-        )
-      ''');
-    }
-  }
-
-  Future _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE reminders (
-        id TEXT PRIMARY KEY,
-        message TEXT,
-        intervalMs INTEGER,
-        nextTriggerUtc TEXT,
-        active INTEGER
-      )
-    ''');
-    
-    await db.execute('''
-      CREATE TABLE laps (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        timestamp TEXT,
-        durationMs INTEGER
-      )
-    ''');
-    
-    await db.execute('''
-      CREATE TABLE checklist (
-        id TEXT PRIMARY KEY,
-        text TEXT,
-        isCompleted INTEGER,
-        position INTEGER
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE stopwatch_state (
-        id INTEGER PRIMARY KEY,
-        isRunning INTEGER,
-        startUtc TEXT,
-        accumulatedMs INTEGER
-      )
-    ''');
-  }
+  // --- Reminders ---
 
   Future<void> saveReminder(ReminderSchedule reminder) async {
-    final db = await database;
-    await db.insert(
-      'reminders',
-      {
-        'id': reminder.id,
-        'message': reminder.message,
-        'intervalMs': reminder.interval.inMilliseconds,
-        'nextTriggerUtc': reminder.nextTriggerUtc.toIso8601String(),
-        'active': reminder.active ? 1 : 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final data = await _readAll();
+    final List<dynamic> reminders = data['reminders'] ?? [];
+    reminders.removeWhere((r) => r['id'] == reminder.id);
+    reminders.add({
+      'id': reminder.id,
+      'message': reminder.message,
+      'intervalMs': reminder.interval.inMilliseconds,
+      'nextTriggerUtc': reminder.nextTriggerUtc.toIso8601String(),
+      'active': reminder.active ? 1 : 0,
+    });
+    data['reminders'] = reminders;
+    await _writeAll(data);
   }
 
+  Future<void> deleteReminder({String? reminderId, bool all = false}) async {
+    final data = await _readAll();
+    if (all) {
+      data['reminders'] = [];
+    } else if (reminderId != null) {
+      final List<dynamic> reminders = data['reminders'] ?? [];
+      reminders.removeWhere((r) => r['id'] == reminderId);
+      data['reminders'] = reminders;
+    }
+    await _writeAll(data);
+  }
+
+  Future<List<ReminderSchedule>> loadReminders() async {
+    final data = await _readAll();
+    final List<dynamic> items = data['reminders'] ?? [];
+    return items.map((r) {
+      return ReminderSchedule(
+        id: r['id'],
+        message: r['message'],
+        interval: Duration(milliseconds: r['intervalMs']),
+        nextTriggerUtc: DateTime.parse(r['nextTriggerUtc']),
+        active: r['active'] == 1,
+      );
+    }).toList();
+  }
+
+  // --- Laps ---
+
   Future<void> saveSaves(List<Duration> saves) async {
-    final path = await _lapsFilePath;
-    final file = File(path);
-    final content = saves.map((d) => d.inMilliseconds.toString()).join('\n');
-    await file.writeAsString(content);
+    final data = await _readAll();
+    data['laps'] = saves.map((d) => d.inMilliseconds).toList();
+    await _writeAll(data);
   }
 
   Future<List<Duration>> loadSaves() async {
-    final path = await _lapsFilePath;
-    final file = File(path);
-    if (!await file.exists()) return [];
-    
-    final content = await file.readAsString();
-    if (content.isEmpty) return [];
-    
-    return content
-        .split('\n')
-        .where((s) => s.isNotEmpty)
-        .map((s) => Duration(milliseconds: int.parse(s)))
-        .toList();
+    final data = await _readAll();
+    final List<dynamic> laps = data['laps'] ?? [];
+    return laps.map((ms) => Duration(milliseconds: ms as int)).toList();
   }
 
   // --- Stopwatch State ---
 
   Future<Map<String, dynamic>?> loadStopwatchState() async {
-    final db = await database;
-    final results = await db.query('stopwatch_state', where: 'id = 1');
-    return results.isNotEmpty ? results.first : null;
+    final data = await _readAll();
+    return data['stopwatch_state'];
   }
 
   Future<void> saveStopwatchState({
@@ -170,137 +115,95 @@ class PersistenceService {
     DateTime? startUtc,
     required int accumulatedMs,
   }) async {
-    final db = await database;
-    await db.insert(
-      'stopwatch_state',
-      {
-        'id': 1,
-        'isRunning': isRunning ? 1 : 0,
-        'startUtc': startUtc?.toIso8601String(),
-        'accumulatedMs': accumulatedMs,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final data = await _readAll();
+    data['stopwatch_state'] = {
+      'isRunning': isRunning ? 1 : 0,
+      'startUtc': startUtc?.toIso8601String(),
+      'accumulatedMs': accumulatedMs,
+    };
+    await _writeAll(data);
   }
 
-  // --- Checklist Methods ---
+  // --- Checklist ---
 
   Future<List<ChecklistItem>> loadChecklist() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('checklist', orderBy: 'position ASC');
-    return List.generate(maps.length, (i) => ChecklistItem.fromMap(maps[i]));
+    final data = await _readAll();
+    final List<dynamic> items = data['checklist'] ?? [];
+    final list = items.map((i) => ChecklistItem.fromMap(Map<String, dynamic>.from(i))).toList();
+    list.sort((a, b) {
+      final posA = (items.firstWhere((it) => it['id'] == a.id)['position'] ?? 0) as int;
+      final posB = (items.firstWhere((it) => it['id'] == b.id)['position'] ?? 0) as int;
+      return posA.compareTo(posB);
+    });
+    return list;
   }
 
   Future<void> saveChecklistItem(ChecklistItem item, {int? position}) async {
-    _log('Saving checklist item: ${item.text}');
-    final db = await database;
-    final data = item.toMap();
+    final data = await _readAll();
+    final List<dynamic> items = data['checklist'] ?? [];
+    final existingIndex = items.indexWhere((i) => i['id'] == item.id);
+    
+    final itemMap = item.toMap();
     if (position != null) {
-      data['position'] = position;
+      itemMap['position'] = position;
+    } else if (existingIndex != -1) {
+      itemMap['position'] = items[existingIndex]['position'] ?? 0;
+    } else {
+      itemMap['position'] = items.length;
     }
-    await db.insert(
-      'checklist',
-      data,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+
+    if (existingIndex != -1) {
+      items[existingIndex] = itemMap;
+    } else {
+      items.add(itemMap);
+    }
+    
+    data['checklist'] = items;
+    await _writeAll(data);
   }
 
   Future<void> saveChecklistOrder(List<ChecklistItem> items) async {
-    final db = await database;
-    await db.transaction((txn) async {
-      for (int i = 0; i < items.length; i++) {
-        await txn.update(
-          'checklist',
-          {'position': i},
-          where: 'id = ?',
-          whereArgs: [items[i].id],
-        );
-      }
-    });
+    final data = await _readAll();
+    final List<dynamic> checklist = [];
+    for (int i = 0; i < items.length; i++) {
+      final map = items[i].toMap();
+      map['position'] = i;
+      checklist.add(map);
+    }
+    data['checklist'] = checklist;
+    await _writeAll(data);
   }
 
   Future<void> deleteChecklistItem(String id) async {
-    final db = await database;
-    await db.delete(
-      'checklist',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final data = await _readAll();
+    final List<dynamic> items = data['checklist'] ?? [];
+    items.removeWhere((i) => i['id'] == id);
+    data['checklist'] = items;
+    await _writeAll(data);
   }
 
   // --- Backup & Restore ---
 
   Future<String> exportBackup() async {
-    final db = await database;
-    
-    // Get reminders
-    final reminders = await db.query('reminders');
-    
-    // Get checklist
-    final checklist = await db.query('checklist');
-    
-    // Get laps (from file)
-    final laps = await loadSaves();
-    final lapsData = laps.map((d) => d.inMilliseconds).toList();
-
-    final backup = {
-      'version': 1,
+    final data = await _readAll();
+    final jsonString = jsonEncode({
+      'version': 2,
       'timestamp': DateTime.now().toIso8601String(),
-      'reminders': reminders,
-      'checklist': checklist,
-      'laps': lapsData,
-    };
-
-    final jsonString = jsonEncode(backup);
+      'data': data,
+    });
     final backupFile = File('timeloop_backup.json');
     await backupFile.writeAsString(jsonString);
-    
     return backupFile.absolute.path;
   }
 
   Future<void> importBackup(String jsonString) async {
-    final Map<String, dynamic> backup = jsonDecode(jsonString);
-    final db = await database;
-
-    await db.transaction((txn) async {
-      // Clear existing
-      await txn.delete('reminders');
-      await txn.delete('checklist');
-
-      // Restore reminders
-      if (backup['reminders'] != null) {
-        for (var r in backup['reminders']) {
-          await txn.insert('reminders', r);
-        }
-      }
-
-      // Restore checklist
-      if (backup['checklist'] != null) {
-        for (var c in backup['checklist']) {
-          await txn.insert('checklist', c);
-        }
-      }
-    });
-
-    // Restore laps
-    if (backup['laps'] != null) {
-      final laps = (backup['laps'] as List).map((ms) => Duration(milliseconds: ms as int)).toList();
-      await saveSaves(laps);
+    final backup = jsonDecode(jsonString);
+    if (backup['data'] != null) {
+      await _writeAll(backup['data']);
     }
   }
 
   Future<void> clearAllData() async {
-    final db = await database;
-    await db.transaction((txn) async {
-      await txn.delete('reminders');
-      await txn.delete('checklist');
-      await txn.delete('laps');
-    });
-    
-    final path = await _lapsFilePath;
-    final file = File(path);
-    if (await file.exists()) {
-      await file.delete();
-    }
+    await _writeAll({});
   }
 }
