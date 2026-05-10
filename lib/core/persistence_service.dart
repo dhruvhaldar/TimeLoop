@@ -29,7 +29,7 @@ class PersistenceService {
     String path = join(await getDatabasesPath(), 'timeloop.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -44,6 +44,9 @@ class PersistenceService {
           isCompleted INTEGER
         )
       ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE checklist ADD COLUMN position INTEGER DEFAULT 0');
     }
   }
 
@@ -70,7 +73,8 @@ class PersistenceService {
       CREATE TABLE checklist (
         id TEXT PRIMARY KEY,
         text TEXT,
-        isCompleted INTEGER
+        isCompleted INTEGER,
+        position INTEGER
       )
     ''');
   }
@@ -114,17 +118,35 @@ class PersistenceService {
 
   Future<List<ChecklistItem>> loadChecklist() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('checklist');
+    final List<Map<String, dynamic>> maps = await db.query('checklist', orderBy: 'position ASC');
     return List.generate(maps.length, (i) => ChecklistItem.fromMap(maps[i]));
   }
 
-  Future<void> saveChecklistItem(ChecklistItem item) async {
+  Future<void> saveChecklistItem(ChecklistItem item, {int? position}) async {
     final db = await database;
+    final data = item.toMap();
+    if (position != null) {
+      data['position'] = position;
+    }
     await db.insert(
       'checklist',
-      item.toMap(),
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> saveChecklistOrder(List<ChecklistItem> items) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (int i = 0; i < items.length; i++) {
+        await txn.update(
+          'checklist',
+          {'position': i},
+          where: 'id = ?',
+          whereArgs: [items[i].id],
+        );
+      }
+    });
   }
 
   Future<void> deleteChecklistItem(String id) async {

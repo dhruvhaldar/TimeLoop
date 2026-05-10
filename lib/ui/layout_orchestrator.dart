@@ -155,6 +155,11 @@ class _LayoutOrchestratorState extends State<LayoutOrchestrator> {
               widget.runtime.addChecklistItem(text);
             });
           },
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              widget.runtime.reorderChecklistItem(oldIndex, newIndex);
+            });
+          },
           onClearCompleted: () {
             setState(() {
               widget.runtime.clearCompletedChecklist();

@@ -6,6 +6,7 @@ class ChecklistView extends StatefulWidget {
   final Function(ChecklistItem) onToggle;
   final Function(String) onDelete;
   final Function(String) onAdd;
+  final Function(int, int) onReorder;
   final VoidCallback onClearCompleted;
 
   const ChecklistView({
@@ -14,6 +15,7 @@ class ChecklistView extends StatefulWidget {
     required this.onToggle,
     required this.onDelete,
     required this.onAdd,
+    required this.onReorder,
     required this.onClearCompleted,
   });
 
@@ -23,6 +25,21 @@ class ChecklistView extends StatefulWidget {
 
 class _ChecklistViewState extends State<ChecklistView> {
   final _textController = TextEditingController();
+  bool _isAutoSort = true;
+
+  List<ChecklistItem> get _displayedItems {
+    if (_isAutoSort) {
+      final list = List<ChecklistItem>.from(widget.items);
+      list.sort((a, b) {
+        if (a.isCompleted == b.isCompleted) {
+          return a.id.compareTo(b.id);
+        }
+        return a.isCompleted ? 1 : -1;
+      });
+      return list;
+    }
+    return widget.items;
+  }
 
   void _submit() {
     if (_textController.text.isNotEmpty) {
@@ -53,12 +70,29 @@ class _ChecklistViewState extends State<ChecklistView> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (widget.items.any((item) => item.isCompleted))
-                TextButton.icon(
-                  onPressed: widget.onClearCompleted,
-                  icon: const Icon(Icons.delete_sweep, color: Colors.redAccent, size: 20),
-                  label: const Text("Clear Done", style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                ),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isAutoSort = !_isAutoSort;
+                      });
+                    },
+                    icon: Icon(
+                      _isAutoSort ? Icons.auto_awesome : Icons.sort,
+                      color: _isAutoSort ? Colors.blueAccent : Colors.white24,
+                      size: 20,
+                    ),
+                    tooltip: _isAutoSort ? "Auto-sort active" : "Manual sorting active",
+                  ),
+                  if (widget.items.any((item) => item.isCompleted))
+                    TextButton.icon(
+                      onPressed: widget.onClearCompleted,
+                      icon: const Icon(Icons.delete_sweep, color: Colors.redAccent, size: 20),
+                      label: const Text("Clear Done", style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                    ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -88,11 +122,23 @@ class _ChecklistViewState extends State<ChecklistView> {
           Expanded(
             child: widget.items.isEmpty
                 ? _buildEmptyState()
-                : ListView.builder(
-                    itemCount: widget.items.length,
+                : ReorderableListView.builder(
+                    itemCount: _displayedItems.length,
+                    onReorder: (oldIndex, newIndex) {
+                      if (_isAutoSort) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Disable Auto-Sort to use custom sorting"),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                        return;
+                      }
+                      widget.onReorder(oldIndex, newIndex);
+                    },
                     itemBuilder: (context, index) {
-                      final item = widget.items[index];
-                      return _buildChecklistItem(item);
+                      final item = _displayedItems[index];
+                      return _buildChecklistItem(item, index);
                     },
                   ),
           ),
@@ -117,8 +163,9 @@ class _ChecklistViewState extends State<ChecklistView> {
     );
   }
 
-  Widget _buildChecklistItem(ChecklistItem item) {
+  Widget _buildChecklistItem(ChecklistItem item, int index) {
     return Container(
+      key: ValueKey(item.id),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.02),

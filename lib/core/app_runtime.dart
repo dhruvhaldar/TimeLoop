@@ -80,7 +80,7 @@ class AppRuntime {
       text: text,
     );
     checklistItems.add(item);
-    PersistenceService.instance.saveChecklistItem(item);
+    PersistenceService.instance.saveChecklistItem(item, position: checklistItems.length - 1);
   }
 
   void toggleChecklistItem(ChecklistItem item) {
@@ -99,5 +99,14 @@ class AppRuntime {
       checklistItems.remove(item);
       PersistenceService.instance.deleteChecklistItem(item.id);
     }
+  }
+
+  void reorderChecklistItem(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = checklistItems.removeAt(oldIndex);
+    checklistItems.insert(newIndex, item);
+    PersistenceService.instance.saveChecklistOrder(checklistItems);
   }
 }
