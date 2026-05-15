@@ -26,11 +26,18 @@ class StopwatchEngine {
 
   bool get isRunning => _running;
   List<StopwatchSave> get saves => List<StopwatchSave>.unmodifiable(_saves);
+  List<StopwatchSave> get laps => saves;
 
   void start(DateTime nowUtc) {
     if (_running) return;
     _running = true;
     _startUtc = nowUtc.toUtc();
+  }
+
+  Duration recordLap(DateTime nowUtc) {
+    final value = elapsed(nowUtc);
+    _saves.add(StopwatchSave(duration: value, name: 'Lap ${_saves.length + 1}'));
+    return value;
   }
 
   void pause(DateTime nowUtc) {

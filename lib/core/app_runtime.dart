@@ -99,10 +99,12 @@ class AppRuntime with ChangeNotifier {
     );
   }
 
-  void reconcileReminders(DateTime nowUtc) {
+  List<ReminderTickResult> reconcileReminders(DateTime nowUtc) {
+    final results = <ReminderTickResult>[];
     for (final reminder in reminders) {
       final result = reminder.reconcile(nowUtc);
       if (result.shouldNotify) {
+        results.add(result);
         String body = reminder.message;
         if (result.missed) {
           body = "[MISSED ${result.missedCount}] $body";
@@ -116,6 +118,7 @@ class AppRuntime with ChangeNotifier {
         );
       }
     }
+    return results;
   }
 
   void dispose() {
