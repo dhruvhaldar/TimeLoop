@@ -1,0 +1,13 @@
+output: dist/
+makers:
+  - name: appimage
+    options:
+      app_id: dev.dhruv.timeloop
+      display_name: TimeLoop
+      icon: assets/icon.png
+      categories:
+        - Utility
+      keywords:
+        - Stopwatch
+        - Timer
+        - Reminder
